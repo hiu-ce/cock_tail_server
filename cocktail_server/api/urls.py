@@ -1,8 +1,10 @@
-from django.contrib import admin
-from django.urls import path,include
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('',views.index),
+    path('cocktail',views.cocktail),
+    path('recipes',views.recipes),
+    path('search',views.search),
+    path('reset',views.reset),
+    path('ingredients',views.ingredients)   
 ]
