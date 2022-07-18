@@ -83,17 +83,27 @@ WSGI_APPLICATION = 'cocktail_server.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'cocktail',
+#         'USER': 'root',
+#         'PASSWORD': 'hiuce12!@',
+#         'HOST': '54.245.128.115',
+#         'PORT': '3306'
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cocktail',
+        'NAME': 'sys',
         'USER': 'root',
-        'PASSWORD': 'hiuce12!@',
-        'HOST': '54.245.128.115',
-        'PORT': '3306'
+        'PASSWORD': '12345',
+        'HOST': '',
+        'PORT': ''
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 

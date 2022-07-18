@@ -153,3 +153,9 @@ class CocktailNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cocktail
         fields = ('cocktail_name',)
+
+class IngredientsSerializer(serializers.Serializer):
+    base = BaseSerializer(many=True)
+    sub = SubSerializer(many=True)
+    juice = JuiceSerializer(many=True)
+    other = OtherSerializer(many=True)
