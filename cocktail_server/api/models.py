@@ -7,7 +7,7 @@ class Cocktail(models.Model):
     ddabong = models.IntegerField(default=0)
     recipe = models.CharField(max_length=200, default="")
 
-    base = models.JSONField(null = True, blank = True, valitators = [check_amount_int])
+    base = models.JSONField(null = True, blank = True, validators = [check_amount_int])
     sub = models.JSONField(null = True, blank = True, validators = [check_amount_int])
     juice = models.JSONField(null = True, blank = True, validators = [check_amount_int])
     other = models.JSONField(null = True, blank = True)
