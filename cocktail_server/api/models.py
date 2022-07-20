@@ -1,13 +1,15 @@
 from django.db import models
 
+from api.validators import check_amount_int
+
 class Cocktail(models.Model):
     cocktail_name = models.CharField(max_length=30, primary_key=True)
     ddabong = models.IntegerField(default=0)
     recipe = models.CharField(max_length=200, default="")
 
-    base = models.JSONField(null = True, blank = True)
-    sub = models.JSONField(null = True, blank = True)
-    juice = models.JSONField(null = True, blank = True)
+    base = models.JSONField(null = True, blank = True, valitators = [check_amount_int])
+    sub = models.JSONField(null = True, blank = True, validators = [check_amount_int])
+    juice = models.JSONField(null = True, blank = True, validators = [check_amount_int])
     other = models.JSONField(null = True, blank = True)
     
 class Base(models.Model):
