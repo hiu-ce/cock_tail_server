@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'cocktail_server.urls'
@@ -72,6 +74,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cocktail_server.wsgi.application'
 
+CORS_ORIGIN_WHITELIST = ['http://localhost:8000',
+                        'http://127.0.0.1:8000']
+CORS_ALLOW_CREDENTIALS = True
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases

@@ -1,3 +1,5 @@
+from urllib import response
+from xml.dom.minidom import Attr
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -21,7 +23,11 @@ def cocktails(request):
             serializer.save()
             return JsonResponse(serializer.data, status = 200)
         else:
-            return JsonResponse(serializer.error, status = 400)
+            if AttributeError:
+                error_data = {"error_code":400, "error_message":f"{data['cocktail_name']}는 이미 존재하는 칵테일입니다"}
+                return JsonResponse(error_data, status = 400)
+            else:
+                return JsonResponse(serializer.error, status = 400)
 
 @csrf_exempt
 def cocktail(request,pk):
@@ -58,7 +64,7 @@ def recipes(request):
 @csrf_exempt
 def search(request): # base filtering 예외처리 필요
     if request.method == 'GET':
-
+        error_code = None
         query_set = Cocktail.objects.all()
 
         if 'base' in request.GET:
@@ -68,7 +74,8 @@ def search(request): # base filtering 예외처리 필요
                     data = Base.objects.get(drink_name = name).cocktails.all()
                     query_set = query_set and data
                 else:
-                    print(f'error_message : there is no {name} in Base')
+                    error_code = 400
+                    error_message = (f'there is no {name} in Base')
                 
         if 'sub' in request.GET:
             sub_data = list(request.GET['sub'].split(',')) 
@@ -76,6 +83,9 @@ def search(request): # base filtering 예외처리 필요
                 if Sub.objects.filter(drink_name = name).exists():
                     data = Sub.objects.get(drink_name = name).cocktails.all()
                     query_set = query_set and data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Base')
 
         if 'juice' in request.GET:
             juice_data = list(request.GET['juice'].split(',')) 
@@ -83,6 +93,9 @@ def search(request): # base filtering 예외처리 필요
                 if Juice.objects.filter(drink_name = name).exists():
                     data = Juice.objects.get(drink_name = name).cocktails.all()
                     query_set = query_set and data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Juice')
 
         if 'other' in request.GET:
             other_data = list(request.GET['other'].split(','))
@@ -90,10 +103,17 @@ def search(request): # base filtering 예외처리 필요
                 if Other.objects.filter(name = name).exists():
                     data = Other.objects.get(name = name).cocktails.all()
                     query_set = query_set and data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Other')
 
         
         serializer = CocktailNameSerializer(query_set, many = True)
-        return JsonResponse(serializer.data, safe = False)
+        if error_code == None:
+            return JsonResponse(serializer.data, safe = False)
+        else:
+            response_data = {"error_code" : error_code, "error_message": error_message, "data" : serializer.data}
+            return JsonResponse(response_data, status = 400)
 
 
 def ingredients(request):
