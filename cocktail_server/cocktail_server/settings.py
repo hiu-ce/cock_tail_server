@@ -74,8 +74,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cocktail_server.wsgi.application'
 
-CORS_ORIGIN_WHITELIST = ['http://localhost:8000',
-                        'http://127.0.0.1:8000']
+# CORS_ORIGIN_WHITELIST = ['http://localhost:8000',
+#                         'http://127.0.0.1:8000']
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Database
@@ -94,7 +95,7 @@ DATABASES = {
         'NAME': 'cocktail',
         'USER': 'root',
         'PASSWORD': 'hiuce12!@',
-        'HOST': '35.84.255.61',
+        'HOST': 'localhost',
         'PORT': '3306'
     }
 }
