@@ -72,7 +72,7 @@ def search(request): # base filtering 예외처리 필요
             for name in base_data:
                 if Base.objects.filter(drink_name = name).exists(): #여기 예외처리 error_code 필요
                     data = Base.objects.get(drink_name = name).cocktails.all()
-                    query_set = query_set and data
+                    query_set = query_set&data
                 else:
                     error_code = 400
                     error_message = (f'there is no {name} in Base')
@@ -82,7 +82,7 @@ def search(request): # base filtering 예외처리 필요
             for name in sub_data:
                 if Sub.objects.filter(drink_name = name).exists():
                     data = Sub.objects.get(drink_name = name).cocktails.all()
-                    query_set = query_set and data
+                    query_set = query_set&data
                 else:
                     error_code = 400
                     error_message = (f'there is no {name} in Base')
@@ -92,7 +92,7 @@ def search(request): # base filtering 예외처리 필요
             for name in juice_data:
                 if Juice.objects.filter(drink_name = name).exists():
                     data = Juice.objects.get(drink_name = name).cocktails.all()
-                    query_set = query_set and data
+                    query_set = query_set&data
                 else:
                     error_code = 400
                     error_message = (f'there is no {name} in Juice')
@@ -102,17 +102,20 @@ def search(request): # base filtering 예외처리 필요
             for name in other_data:
                 if Other.objects.filter(name = name).exists():
                     data = Other.objects.get(name = name).cocktails.all()
-                    query_set = query_set and data
+                    query_set = query_set&data
                 else:
                     error_code = 400
                     error_message = (f'there is no {name} in Other')
 
-        
-        serializer = CocktailNameSerializer(query_set, many = True)
+        if not query_set:
+            error_code = 400
+            error_message = "없는 조합입니다"
+
         if error_code == None:
+            serializer = CocktailNameSerializer(query_set, many = True)
             return JsonResponse(serializer.data, safe = False)
         else:
-            response_data = {"error_code" : error_code, "error_message": error_message, "data" : serializer.data}
+            response_data = {"error_code" : error_code, "error_message": error_message, "data" : ""}
             return JsonResponse(response_data, status = 400)
 
 
