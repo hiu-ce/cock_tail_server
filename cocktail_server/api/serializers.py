@@ -77,69 +77,73 @@ class CocktailSerializer(serializers.ModelSerializer):
     
     def update(Self,instance, validated_data):
         if instance.base != validated_data['base']: #기존 데이터와 수정 데이터가 다를 때 - base 
+            bases = Base.objects.all()
             for name in instance.base.keys(): #기존 base에서 cocktail 연결 해제
-                obj = Base.objects.get(drink_name = name)
+                obj = bases.get(drink_name = name)
                 obj.cocktails.remove(instance)
                 if not obj.cocktails.exists(): # 연결 모두 해제시 삭제
                     if not name in validated_data['base'].keys():
                         obj.delete()
 
             for new_name in validated_data['base'].keys(): # 새 데이터에 cocktail 연결
-                if Base.objects.filter(drink_name = new_name).exists():
-                    obj = Base.objects.get(drink_name = new_name)
+                if bases.filter(drink_name = new_name).exists():
+                    obj = bases.get(drink_name = new_name)
                 else:
-                    obj = Base.objects.create(drink_name = new_name)
+                    obj = bases.create(drink_name = new_name)
                 obj.cocktails.add(instance)
 
             instance.base = validated_data['base']
 
         if instance.sub != validated_data['sub']: #기존 데이터와 수정 데이터가 다를 때 - base 
+            subs = Sub.objects.all()
             for name in instance.sub.keys(): #기존 base에서 cocktail 연결 해제
-                obj = Sub.objects.get(drink_name = name)
+                obj = subs.get(drink_name = name)
                 obj.cocktails.remove(instance)
                 if not obj.cocktails.exists(): # 연결 모두 해제시 삭제
                     if not name in validated_data['sub'].keys():
                         obj.delete()
 
             for new_name in validated_data['sub'].keys(): # 새 데이터에 cocktail 연결
-                if Sub.objects.filter(drink_name = new_name).exists():
-                    obj = Sub.objects.get(drink_name = new_name)
+                if subs.filter(drink_name = new_name).exists():
+                    obj = subs.get(drink_name = new_name)
                 else:
-                    obj = Sub.objects.create(drink_name = new_name)
+                    obj = subs.create(drink_name = new_name)
                 obj.cocktails.add(instance)
 
             instance.sub = validated_data['sub']
 
-        if instance.juice != validated_data['juice']: #기존 데이터와 수정 데이터가 다를 때 - base 
+        if instance.juice != validated_data['juice']: #기존 데이터와 수정 데이터가 다를 때 - base
+            juices = Juice.objects.all() 
             for name in instance.juice.keys(): #기존 base에서 cocktail 연결 해제
-                obj = Juice.objects.get(drink_name = name)
+                obj = juices.get(drink_name = name)
                 obj.cocktails.remove(instance)
                 if not obj.cocktails.exists(): # 연결 모두 해제시 삭제
                     if not name in validated_data['juice'].keys():
                         obj.delete()
 
             for new_name in validated_data['juice'].keys(): # 새 데이터에 cocktail 연결
-                if Juice.objects.filter(drink_name = new_name).exists():
-                    obj = Juice.objects.get(drink_name = new_name)
+                if juices.filter(drink_name = new_name).exists():
+                    obj = juices.get(drink_name = new_name)
                 else:
-                    obj = Juice.objects.create(drink_name = new_name)
+                    obj = juices.create(drink_name = new_name)
                 obj.cocktails.add(instance)
 
             instance.juice = validated_data['juice']
 
         if instance.other != validated_data['other']: #기존 데이터와 수정 데이터가 다를 때 - base 
+            others = Other.objects.all()
             for name in instance.other.keys(): #기존 base에서 cocktail 연결 해제
-                obj = Other.objects.get(name = name)
+                obj = others.get(name = name)
                 obj.cocktails.remove(instance)
                 if not obj.cocktails.exists(): # 연결 모두 해제시 삭제
                     if not name in validated_data['other'].keys():
                         obj.delete()
 
             for new_name in validated_data['other'].keys(): # 새 데이터에 cocktail 연결
-                if Other.objects.filter(name = new_name).exists():
-                    obj = Other.objects.get(name = new_name)
+                if others.filter(name = new_name).exists():
+                    obj = others.get(name = new_name)
                 else:
-                    obj = Other.objects.create(name = new_name)
+                    obj = others.create(name = new_name)
                 obj.cocktails.add(instance)
 
             instance.other = validated_data['other']
