@@ -27,7 +27,7 @@ class CocktailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cocktail
-        fields = ('cocktail_name','base','sub','juice','other','recipe')
+        fields = ('cocktail_name','base','sub','juice','other','recipe','img_url')
 
     def create(self, validated_data):
         base_names = list(validated_data['base'].keys())
@@ -145,6 +145,7 @@ class CocktailSerializer(serializers.ModelSerializer):
             instance.other = validated_data['other']
 
         instance.recipe = validated_data['recipe']
+        instance.img_url = validated_data['img_url']
         instance.save()
         return instance
 

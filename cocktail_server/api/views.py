@@ -115,7 +115,7 @@ def search(request): # base filtering 예외처리 필요
             serializer = CocktailNameSerializer(query_set, many = True)
             return JsonResponse(serializer.data, safe = False)
         else:
-            response_data = {"error_code" : error_code, "error_message": error_message, "data" : ""}
+            response_data = {"error_code" : error_code, "error_message": error_message, "data" : []}
             return JsonResponse(response_data, status = 400)
 
 

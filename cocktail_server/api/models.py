@@ -6,6 +6,7 @@ class Cocktail(models.Model):
     cocktail_name = models.CharField(max_length=30, primary_key=True)
     ddabong = models.IntegerField(default=0)
     recipe = models.CharField(max_length=200, default="")
+    img_url = models.URLField(max_length=200, default="", blank=True)
 
     base = models.JSONField(null = True, blank = True, validators = [check_amount_int])
     sub = models.JSONField(null = True, blank = True, validators = [check_amount_int])
