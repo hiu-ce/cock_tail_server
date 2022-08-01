@@ -75,7 +75,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cocktail_server.wsgi.application'
 
-CORS_ORIGIN_WHITELIST = ['https://cocktail-web.vercel.app', 'http://localhost:3000', 'http://127.0.0.1:3000']
+CORS_ORIGIN_WHITELIST = ['https://cocktail-web.vercel.app', 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost', 'http://127.0.0.1']
 # CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = list(default_methods) 

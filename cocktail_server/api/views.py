@@ -49,10 +49,34 @@ def cocktail(request,pk):
             return JsonResponse(serializer.error, status = 400)
 
     elif request.method == 'DELETE':
-        obj = Cocktail.objects.get(cocktail_name = pk)
-        obj.delete()
+        cocktail = Cocktail.objects.get(cocktail_name = pk)
+        bases = cocktail.base_cocktail.all()
+        subs = cocktail.sub_cocktail.all()
+        juices = cocktail.juice_cocktail.all()
+        others = cocktail.other_cocktail.all()
+
+        for obj in bases:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        for obj in subs:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        for obj in juices:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        for obj in others:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        cocktail.delete()
         return HttpResponse(status=200)
-    return 
 
 def recipes(request):
     if request.method == 'GET':
@@ -85,7 +109,7 @@ def search(request): # base filtering 예외처리 필요
                     query_set = query_set&data
                 else:
                     error_code = 400
-                    error_message = (f'there is no {name} in Base')
+                    error_message = (f'there is no {name} in Sub')
 
         if 'juice' in request.GET:
             juice_data = list(request.GET['juice'].split(',')) 
