@@ -7,5 +7,6 @@ urlpatterns = [
     path('recipes',views.recipes),
     path('search',views.search),
     path('reset',views.reset),
-    path('ingredients',views.ingredients)   
+    path('ingredients',views.ingredients),
+    path('todaydrink',views.todaydrink),   
 ]

@@ -5,8 +5,8 @@ from api.validators import check_amount_int
 class Cocktail(models.Model):
     cocktail_name = models.CharField(max_length=30, primary_key=True)
     ddabong = models.IntegerField(default=0)
-    recipe = models.CharField(max_length=200, default="")
-    img_url = models.URLField(max_length=200, default="", blank=True)
+    recipe = models.CharField(max_length=400, default="")
+    img_url = models.URLField(max_length=300, default="", blank=True)
 
     base = models.JSONField(null = True, blank = True, validators = [check_amount_int])
     sub = models.JSONField(null = True, blank = True, validators = [check_amount_int])
@@ -25,3 +25,6 @@ class Juice(models.Model):
 class Other(models.Model):
     name = models.CharField(max_length=30)
     cocktails = models.ManyToManyField(Cocktail,related_name='other_cocktail')
+
+class TodayDrink(models.Model):
+    drink_name = models.ForeignKey(Cocktail, on_delete=models.CASCADE, db_column= 'today_drink')

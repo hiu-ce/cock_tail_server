@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
-from .models import Base,Sub,Juice,Other,Cocktail
+from .models import Base,Sub,Juice,Other,Cocktail,TodayDrink
 from .serializers import CocktailSerializer, BaseSerializer, SubSerializer, CocktailNameSerializer, OtherSerializer, JuiceSerializer, IngredientsSerializer
 # Create your views here.
 
@@ -185,3 +185,13 @@ def reset(request):
         Other.objects.all().delete()
 
         return HttpResponse(status = 200)
+
+def todaydrink(request):
+    obj = TodayDrink.objects.all()
+    if obj.filter(id=1).exists():
+        drink = obj.get(id=1).drink_name
+        serializer = CocktailNameSerializer(drink)
+        ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
+    else:
+        ResponseData = {"error_code":400,"error_message":"no crontab error", "data" : ""}
+    return JsonResponse(ResponseData, status=200)

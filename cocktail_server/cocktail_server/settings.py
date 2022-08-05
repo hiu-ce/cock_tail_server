@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'api',
     'rest_framework',
     'corsheaders',
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -160,3 +161,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+CRONJOBS = [
+    # ('*/1 * * * *', 'api.cron.todaydrink','>> /Users/kimseonghun/cocktail_server/cocktail_server/log/cron.log')
+    ('*/1 * * * *', 'api.cron.todaydrink')
+]
