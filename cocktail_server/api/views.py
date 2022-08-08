@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
-from .models import Base,Sub,Juice,Other,Cocktail
+from .models import Base,Sub,Juice,Other,Cocktail,TodayDrink
 from .serializers import CocktailSerializer, BaseSerializer, SubSerializer, CocktailNameSerializer, OtherSerializer, JuiceSerializer, IngredientsSerializer
 # Create your views here.
 
@@ -47,10 +47,34 @@ def cocktail(request,pk):
             return JsonResponse(serializer.error, status = 400)
 
     elif request.method == 'DELETE':
-        obj = Cocktail.objects.get(cocktail_name = pk)
-        obj.delete()
+        cocktail = Cocktail.objects.get(cocktail_name = pk)
+        bases = cocktail.base_cocktail.all()
+        subs = cocktail.sub_cocktail.all()
+        juices = cocktail.juice_cocktail.all()
+        others = cocktail.other_cocktail.all()
+
+        for obj in bases:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        for obj in subs:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        for obj in juices:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        for obj in others:
+            obj.cocktails.remove(cocktail)
+            if not obj.cocktails.exists():
+                obj.delete()
+
+        cocktail.delete()
         return HttpResponse(status=200)
-    return 
 
 def recipes(request):
     if request.method == 'GET':
@@ -83,7 +107,7 @@ def search(request): # base filtering 예외처리 필요
                     query_set = query_set&data
                 else:
                     error_code = 400
-                    error_message = (f'there is no {name} in Base')
+                    error_message = (f'there is no {name} in Sub')
 
         if 'juice' in request.GET:
             juice_data = list(request.GET['juice'].split(','))
@@ -91,9 +115,7 @@ def search(request): # base filtering 예외처리 필요
             for name in juice_data:
                 if Juice.objects.filter(drink_name = name).exists():
                     data = Juice.objects.get(drink_name = name).cocktails.all()
-                    print(f'second query {data}')
                     query_set = query_set&data
-                    print(f'third query {query_set}')
                 else:
                     error_code = 400
                     error_message = (f'there is no {name} in Juice')
@@ -108,11 +130,16 @@ def search(request): # base filtering 예외처리 필요
                     error_code = 400
                     error_message = (f'there is no {name} in Other')
 
-        serializer = CocktailNameSerializer(query_set, many = True)
+
+        if not query_set:
+            error_code = 400
+            error_message = "없는 조합입니다"
+
         if error_code == None:
+            serializer = CocktailNameSerializer(query_set, many = True)
             return JsonResponse(serializer.data, safe = False)
         else:
-            response_data = {"error_code" : error_code, "error_message": error_message, "data" : serializer.data}
+            response_data = {"error_code" : error_code, "error_message": error_message, "data" : []}
             return JsonResponse(response_data, status = 400)
 
 
@@ -158,3 +185,13 @@ def reset(request):
         Other.objects.all().delete()
 
         return HttpResponse(status = 200)
+
+def todaydrink(request):
+    obj = TodayDrink.objects.all()
+    if obj.filter(id=1).exists():
+        drink = obj.get(id=1).drink_name
+        serializer = CocktailNameSerializer(drink)
+        ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
+    else:
+        ResponseData = {"error_code":400,"error_message":"no crontab error", "data" : ""}
+    return JsonResponse(ResponseData, status=200)
