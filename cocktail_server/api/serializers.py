@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  Base, Sub, Juice, Other, Cocktail
+from .models import  Base, Sub, Juice, Other, Cocktail,Tag
 # from django.shortcuts import get_object_or_404
 
 class BaseSerializer(serializers.ModelSerializer):
@@ -24,10 +24,26 @@ class OtherSerializer(serializers.ModelSerializer):
 
 
 class CocktailSerializer(serializers.ModelSerializer):
-
+    proof = serializers.SerializerMethodField()
     class Meta:
         model = Cocktail
-        fields = ('cocktail_name','base','sub','juice','other','recipe','img_url')
+        fields = ('cocktail_name','base','sub','juice','other','recipe','img_url','proof')
+        # fields = '__all__'
+
+    def get_proof(self,obj):
+        data = {"base" : dict(), "sub" : dict() }
+        bases = obj.base
+        subs = obj.sub
+
+        BaseQuery = Base.objects.all()
+        SubQuery = Sub.objects.all()
+
+        for base in bases:
+            data["base"][base] = BaseQuery.get(drink_name = base).alcohol_degree
+        for sub in subs:
+            data["sub"][sub] = SubQuery.get(drink_name = sub).alcohol_degree
+        
+        return data
 
     def create(self, validated_data):
         base_names = list(validated_data['base'].keys())
@@ -72,6 +88,15 @@ class CocktailSerializer(serializers.ModelSerializer):
 
             obj.cocktails.add(cocktail)
             obj.save()
+
+        for tag in tags:
+            if Other.objects.filter(name = tag).exists() == False:
+                obj = Tag.objects.crate(name = tag)
+            else:
+                obj = Tag.objects.get(name = tag)
+            
+            cocktail.add(obj)
+            cocktail.save()
 
         return cocktail
     
