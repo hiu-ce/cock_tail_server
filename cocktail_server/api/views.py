@@ -188,10 +188,13 @@ def reset(request):
 
 def todaydrink(request):
     obj = TodayDrink.objects.all()
-    if obj.filter(id=1).exists():
-        drink = obj.get(id=1).drink_name
-        serializer = CocktailNameSerializer(drink)
-        ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
+    if obj.exists():
+        drink = obj.first().drink_name
     else:
-        ResponseData = {"error_code":400,"error_message":"no crontab error", "data" : ""}
+        drink = Cocktail.objects.order_by("?").first()
+        newObj = obj.create(drink_name = drink)
+        newObj.save()
+    
+    serializer = CocktailNameSerializer(drink)
+    ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
     return JsonResponse(ResponseData, status=200)
