@@ -16,9 +16,11 @@ class Cocktail(models.Model):
 class Base(models.Model):
     drink_name = models.CharField(max_length=30,primary_key=True)
     cocktails = models.ManyToManyField(Cocktail,related_name='base_cocktail')
+    alcohol_degree = models.FloatField(null=True)
 class Sub(models.Model):
     drink_name = models.CharField(max_length=30)
     cocktails = models.ManyToManyField(Cocktail,related_name = 'sub_cocktail')
+    alcohol_degree = models.FloatField(null=True)
 class Juice(models.Model):
     drink_name = models.CharField(max_length=30)
     cocktails = models.ManyToManyField(Cocktail, related_name='juice_cocktail')

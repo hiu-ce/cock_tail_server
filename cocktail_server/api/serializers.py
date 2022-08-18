@@ -5,12 +5,12 @@ from .models import  Base, Sub, Juice, Other, Cocktail
 class BaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Base
-        fields = ('drink_name',)
+        fields = ('drink_name','alcohol_degree',)
 
 class SubSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sub
-        fields = ('drink_name',)
+        fields = ('drink_name','alcohol_degree',)
 
 class JuiceSerializer(serializers.ModelSerializer):
     class Meta:
