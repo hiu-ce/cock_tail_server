@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  Base, Sub, Juice, Other, Cocktail,Tag
+from .models import  Base, Sub, Juice, Other, Cocktail
 # from django.shortcuts import get_object_or_404
 
 class BaseSerializer(serializers.ModelSerializer):
@@ -89,11 +89,11 @@ class CocktailSerializer(serializers.ModelSerializer):
             obj.cocktails.add(cocktail)
             obj.save()
 
-        for tag in tags:
-            if Other.objects.filter(name = tag).exists() == False:
-                obj = Tag.objects.crate(name = tag)
-            else:
-                obj = Tag.objects.get(name = tag)
+        # for tag in tags:
+        #     if Other.objects.filter(name = tag).exists() == False:
+        #         obj = Tag.objects.crate(name = tag)
+        #     else:
+        #         obj = Tag.objects.get(name = tag)
             
             cocktail.add(obj)
             cocktail.save()
