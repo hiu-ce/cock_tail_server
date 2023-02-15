@@ -1,10 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from rest_framework import views, response, status
-from .models import Cocktail, Ingredient, CocktailIngredient, Glass
-from .serializers import CocktailSerializer, IngredientSerializer, IngredientSerializer, GlassSerializer
+from .models import Cocktail, Glass, Base, Sub, Juice, Other, CocktailBase, CocktailSub,CocktailJuice,CocktailOther
+from .serializers import CocktailSerializer, GlassSerializer, BaseSerializer, SubSerializer,JuiceSerializer,OtherSerializer
 
 @csrf_exempt
 def cocktail(request):
@@ -26,49 +26,34 @@ def cocktail(request):
         serializer = CocktailSerializer(data=data) # 그 외 정보들은 시리얼라이저로 생성   
         
         if serializer.is_valid(): # 1차 유효성 검사
-            cocktail = serializer.save() # 이거 되냐?
-            glass = Glass.objects.get(name = glass_data) #Glass 연결
+            cocktail = serializer.save() #통과시 1차 정보 저장
+            glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
             
-            for base_name in base_data.keys(): # base 연결
-                base = Ingredient.objects.get(name = base_name)
-                amount = base_data[base_name]
-                CocktailIngredient.objects.create(cocktail = cocktail, ingredient = base, amount = amount)
+            for name in base_data.keys(): # base 연결
+                base = get_object_or_404(Base, name = name)
+                amount = base_data[name]
+                CocktailBase.objects.create(cocktail = cocktail, base = base, amount = amount)
                 
-            for sub_name in sub_data.keys(): # sub 연결
-                sub = Ingredient.objects.get(name = sub_name)
-                amount = sub_data[sub_name]
-                CocktailIngredient.objects.create(cocktail = cocktail, ingredient = sub, amount = amount)
+            for name in sub_data.keys(): # sub 연결
+                sub = get_object_or_404(Sub, name = name)
+                amount = sub_data[name]
+                CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
                 
-            for juice_name in juice_data.keys(): # other 연결
-                juice = Ingredient.objects.get(name = juice_name)
-                amount = juice_data[juice_name]
-                CocktailIngredient.objects.create(cocktail = cocktail, ingredient = juice, amount = amount)
+            for name in juice_data.keys(): # other 연결
+                juice = get_object_or_404(Juice, name = name)
+                amount = juice_data[name]
+                CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
                 
-            for other_name in other_data.keys(): # other 연결
-                base = Ingredient.objects.get(name = other_name)
-                amount = other_data[other_name]
-                CocktailIngredient.objects.create(cocktail = cocktail, ingredient = other, amount = amount)
+            for name in other_data.keys(): # other 연결
+                other = get_object_or_404(Other, name = name)
+                amount = other_data[name]
+                CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
                 
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST) #알 수 없는 오류
 
-
-@csrf_exempt
-def ingredients(request):
-    if request.method == 'GET':
-        ingredients = Ingredient.objects.all()
-        serializer = IngredientSerializer(ingredients, many=True)
-        return JsonResponse(serializer.data, safe=False)
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        serializer = IngredientSerializer(data = data)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status = status.HTTP_201_CREATED)
-        return JsonResponse(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
     
 @csrf_exempt
 def glass(request):
@@ -86,105 +71,86 @@ def glass(request):
         return JsonResponse(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         
         
+@csrf_exempt
+def base(request):
+    if request.method == 'GET':
+        query_set = Base.objects.all()
+        serializer = BaseSerializer(query_set,many = True)
+        return JsonResponse(serializer.data, safe = False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = BaseSerializer(data = data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status = 200)
+        else:
+            if AttributeError:
+                error_data = {"error_code":400, "error_message":f"{data['name']}는 이미 존재하는 재료입니다"}
+                return JsonResponse(error_data, status = 400)
+            else:
+                return JsonResponse(serializer.error, status = 400)
+            
+@csrf_exempt
+def sub(request):
+    if request.method == 'GET':
+        query_set = Sub.objects.all()
+        serializer = SubSerializer(query_set,many = True)
+        return JsonResponse(serializer.data, safe = False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = SubSerializer(data = data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status = 200)
+        else:
+            if AttributeError:
+                error_data = {"error_code":400, "error_message":f"{data['name']}는 이미 존재하는 재료입니다"}
+                return JsonResponse(error_data, status = 400)
+            else:
+                return JsonResponse(serializer.error, status = 400)
 
-# def base(request):
-#     if request.method == 'GET':
-#         query_set = Base.objects.all()
-#         serializer = BaseSerializer(query_set,many = True)
-#         return JsonResponse(serializer.data, safe = False)
-#     elif request.method == 'POST':
-#         data = JSONParser().parse(request)
-#         serializer = BaseSerializer(data = data)
+@csrf_exempt
+def juice(request):
+    if request.method == 'GET':
+        query_set = Juice.objects.all()
+        serializer = JuiceSerializer(query_set,many = True)
+        return JsonResponse(serializer.data, safe = False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = JuiceSerializer(data = data)
         
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status = 200)
-#         else:
-#             if AttributeError:
-#                 error_data = {"error_code":400, "error_message":f"{data['name']}는 이미 존재하는 재료입니다"}
-#                 return JsonResponse(error_data, status = 400)
-#             else:
-#                 return JsonResponse(serializer.error, status = 400)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status = 200)
+        else:
+            if AttributeError:
+                error_data = {"error_code":400, "error_message":f"{data['name']} is already exist"}
+                return JsonResponse(error_data, status = 400)
+            else:
+                return JsonResponse(serializer.error, status = 400)            
             
-# @csrf_exempt
-# def sub(request):
-#     if request.method == 'GET':
-#         query_set = Sub.objects.all()
-#         serializer = SubSerializer(query_set,many = True)
-#         return JsonResponse(serializer.data, safe = False)
-#     elif request.method == 'POST':
-#         data = JSONParser().parse(request)
-#         serializer = SubSerializer(data = data)
+@csrf_exempt
+def other(request):
+    if request.method == 'GET':
+        query_set = Other.objects.all()
+        serializer = OtherSerializer(query_set,many = True)
+        return JsonResponse(serializer.data, safe = False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = OtherSerializer(data = data)
         
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status = 200)
-#         else:
-#             if AttributeError:
-#                 error_data = {"error_code":400, "error_message":f"{data['name']}는 이미 존재하는 재료입니다"}
-#                 return JsonResponse(error_data, status = 400)
-#             else:
-#                 return JsonResponse(serializer.error, status = 400)
-
-# @csrf_exempt
-# def juice(request):
-#     if request.method == 'GET':
-#         query_set = Juice.objects.all()
-#         serializer = JuiceSerializer(query_set,many = True)
-#         return JsonResponse(serializer.data, safe = False)
-#     elif request.method == 'POST':
-#         data = JSONParser().parse(request)
-#         serializer = JuiceSerializer(data = data)
-        
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status = 200)
-#         else:
-#             if AttributeError:
-#                 error_data = {"error_code":400, "error_message":f"{data['name']} is already exist"}
-#                 return JsonResponse(error_data, status = 400)
-#             else:
-#                 return JsonResponse(serializer.error, status = 400)            
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status = 200)
+        else:
+            if AttributeError:
+                error_data = {"error_code":400, "error_message":f"{data['name']} is already exist"}
+                return JsonResponse(error_data, status = 400)
+            else:
+                return JsonResponse(serializer.error, status = 400) 
             
-# @csrf_exempt
-# def other(request):
-#     if request.method == 'GET':
-#         query_set = Other.objects.all()
-#         serializer = OtherSerializer(query_set,many = True)
-#         return JsonResponse(serializer.data, safe = False)
-#     elif request.method == 'POST':
-#         data = JSONParser().parse(request)
-#         serializer = OtherSerializer(data = data)
-        
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status = 200)
-#         else:
-#             if AttributeError:
-#                 error_data = {"error_code":400, "error_message":f"{data['name']} is already exist"}
-#                 return JsonResponse(error_data, status = 400)
-#             else:
-#                 return JsonResponse(serializer.error, status = 400) 
-            
-# @csrf_exempt
-# def glass(request):
-#     if request.method == 'GET':
-#         query_set = Glass.objects.all()
-#         serializer = GlassSerializer(query_set,many = True)
-#         return JsonResponse(serializer.data, safe = False)
-#     elif request.method == 'POST':
-#         data = JSONParser().parse(request)
-#         serializer = GlassSerializer(data = data)
-        
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status = 200)
-#         else:
-#             if AttributeError:
-#                 error_data = {"error_code":400, "error_message":f"{data['name']} is already exist"}
-#                 return JsonResponse(error_data, status = 400)
-#             else:
-#                 return JsonResponse(serializer.error, status = 400)  
 # @csrf_exempt
 # def cocktail(request,pk):
 #     #obj = Cocktail.objects.get(cocktail_name = pk) 예외처리 ???
