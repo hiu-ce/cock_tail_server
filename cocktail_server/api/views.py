@@ -34,6 +34,8 @@ def cocktail(request):
         if serializer.is_valid() and Glass.objects.filter(name = glass_data).exists() and check_cocktail_data(Base,base_data) and check_cocktail_data(Sub,sub_data) and check_cocktail_data(Juice,juice_data) and check_cocktail_data(Other,other_data):
             # 데이터 유효할 때
             cocktail = serializer.save()
+            alcohol_amount = 0
+            cocktail_amount = 0
             
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
@@ -41,16 +43,21 @@ def cocktail(request):
             for name in base_data.keys(): # base 연결
                 base = get_object_or_404(Base, name = name)
                 amount = base_data[name]
+                cocktail_amount += amount
+                alcohol_amount += amount * (base.alcohol_degree / 100)
                 CocktailBase.objects.create(cocktail = cocktail, base = base, amount = amount)
 
             for name in sub_data.keys(): # sub 연결
                 sub = get_object_or_404(Sub, name = name)
                 amount = sub_data[name]
+                cocktail_amount += amount
+                alcohol_amount += amount * (sub.alcohol_degree / 100)
                 CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
 
             for name in juice_data.keys(): # other 연결
                 juice = get_object_or_404(Juice, name = name)
                 amount = juice_data[name]
+                cocktail_amount += amount
                 CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
 
             for name in other_data.keys(): # other 연결
@@ -58,6 +65,7 @@ def cocktail(request):
                 amount = other_data[name]
                 CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
             
+            cocktail.alcohol_degree = (alcohol_amount / cocktail_amount) * 100
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         
