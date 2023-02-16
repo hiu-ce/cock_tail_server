@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from .models import Cocktail, Glass,Base,Sub,Juice,Other,CocktailBase,CocktailSub,CocktailJuice,CocktailOther
 
+class CocktailNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cocktail
+        fields = ('name',)
+    
 class GlassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Glass
@@ -65,5 +70,4 @@ class CocktailSerializer(serializers.ModelSerializer): #이 방식이 제일 나
         for cocktail_other in CocktailOther.objects.filter(cocktail = cocktail).select_related('other'):
             data[cocktail_other.other.name] = cocktail_other.amount 
         return data
-        
     

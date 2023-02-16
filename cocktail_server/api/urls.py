@@ -9,7 +9,7 @@ urlpatterns = [
     path('other',views.other),
     path('glass',views.glass),
     # # path('cocktail/<str:pk>',views.cocktail),
-    # # path('recipes',views.recipes),
+    path('recipes',views.recipes),
     # # path('search',views.search),
     # # path('reset',views.reset),
     # path('ingredients',views.ingredients),

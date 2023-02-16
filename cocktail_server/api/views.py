@@ -4,7 +4,13 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from rest_framework import views, response, status
 from .models import Cocktail, Glass, Base, Sub, Juice, Other, CocktailBase, CocktailSub,CocktailJuice,CocktailOther
-from .serializers import CocktailSerializer, GlassSerializer, BaseSerializer, SubSerializer,JuiceSerializer,OtherSerializer
+from .serializers import CocktailSerializer, GlassSerializer, BaseSerializer, SubSerializer,JuiceSerializer,OtherSerializer,CocktailNameSerializer
+
+def check_cocktail_data(model,data): #칵테일 레시피 생성시 들어온 재료가 존재하는지 확인하는 함수
+    for name in data.keys():
+        if not model.objects.filter(name = name).exists():
+            return False
+    return True
 
 @csrf_exempt
 def cocktail(request):
@@ -21,12 +27,14 @@ def cocktail(request):
         juice_data = data.pop('juice')
         other_data = data.pop('other')
         glass_data = data.pop('glass')
-        cocktail_name = data['name']
         
-        serializer = CocktailSerializer(data=data) # 그 외 정보들은 시리얼라이저로 생성   
+        serializer = CocktailSerializer(data = data)
         
-        if serializer.is_valid(): # 1차 유효성 검사
-            cocktail = serializer.save() #통과시 1차 정보 저장
+        # 유효성 검사
+        if serializer.is_valid() and Glass.objects.filter(name = glass_data).exists() and check_cocktail_data(Base,base_data) and check_cocktail_data(Sub,sub_data) and check_cocktail_data(Juice,juice_data) and check_cocktail_data(Other,other_data):
+            # 데이터 유효할 때
+            cocktail = serializer.save()
+            
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
             
@@ -34,25 +42,27 @@ def cocktail(request):
                 base = get_object_or_404(Base, name = name)
                 amount = base_data[name]
                 CocktailBase.objects.create(cocktail = cocktail, base = base, amount = amount)
-                
+
             for name in sub_data.keys(): # sub 연결
                 sub = get_object_or_404(Sub, name = name)
                 amount = sub_data[name]
                 CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
-                
+
             for name in juice_data.keys(): # other 연결
                 juice = get_object_or_404(Juice, name = name)
                 amount = juice_data[name]
                 CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
-                
+
             for name in other_data.keys(): # other 연결
                 other = get_object_or_404(Other, name = name)
                 amount = other_data[name]
                 CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
-                
+            
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST) #알 수 없는 오류
+        
+        error_data = {"error_code":400, "error_message":f"invalid data"}
+        return JsonResponse(error_data, status = 400)
 
     
 @csrf_exempt
@@ -200,11 +210,16 @@ def other(request):
 #         cocktail.delete()
 #         return HttpResponse(status=200)
 
-# def recipes(request):
-#     if request.method == 'GET':
-#         query_set = Cocktail.objects.all()
-#         names = CocktailNameSerializer(query_set, many = True)
-#         return JsonResponse(names.data, safe = False)
+def recipes(request):
+    if request.method == 'GET':
+        query_set = Cocktail.objects.all()
+        # names = CocktailNameSerializer(query_set, many = True)
+        # return JsonResponse(names.data, safe = False)
+        
+        data = {"cocktails" : []}
+        for cocktail in query_set:
+            data["cocktails"].append(cocktail.name)
+        return JsonResponse(data)
 
 
 # @csrf_exempt
