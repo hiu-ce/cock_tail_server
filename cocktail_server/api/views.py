@@ -13,7 +13,7 @@ def check_cocktail_data(model,data): #칵테일 레시피 생성시 들어온 �
     return True
 
 @csrf_exempt
-def cocktail(request):
+def cocktails(request):
     if request.method == 'GET': # 칵테일 레시피 전체 요청
         cocktails = Cocktail.objects.all()
         serializer = CocktailSerializer(cocktails, many=True)
@@ -74,7 +74,7 @@ def cocktail(request):
 
     
 @csrf_exempt
-def glass(request):
+def glasses(request):
     if request.method == 'GET':
         glass = Glass.objects.all()
         serializer = GlassSerializer(glass, many=True)
@@ -87,7 +87,26 @@ def glass(request):
             serializer.save()
             return JsonResponse(serializer.data, status = status.HTTP_201_CREATED)
         return JsonResponse(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+@csrf_exempt
+def glass(request,pk):
+    if request.method == 'PUT':
+        obj = get_object_or_404(Glass,name = pk)
+        data = JSONParser().parse(request)
+        if Glass.objects.filter(name = data['name']).exists():
+            return JsonResponse({"error_code" : 404 , "error_message" : f"{data['name']} is already exists"})
         
+        serializer = GlassSerializer(obj,data = data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data,status = 200)
+        return JsonResponse(serializer.errors, status = 404)
+    
+    elif request.method == 'DELETE':
+        glass = get_object_or_404(Glass,name = pk)
+        glass.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
         
 @csrf_exempt
 def base(request):
@@ -169,61 +188,52 @@ def other(request):
             else:
                 return JsonResponse(serializer.error, status = 400) 
             
-# @csrf_exempt
-# def cocktail(request,pk):
-#     #obj = Cocktail.objects.get(cocktail_name = pk) 예외처리 ???
-
-#     if request.method == 'GET':
-#         obj = Cocktail.objects.get(cocktail_name = pk)
-#         serializer = CocktailSerializer(obj)
-#         return JsonResponse(serializer.data, safe=False)
+@csrf_exempt
+def cocktail(request,pk): # ---------- 여기서 부터 수정 필요 ---------------
+    if request.method == 'GET':
+        obj = Cocktail.objects.get(name = pk)
+        serializer = CocktailSerializer(obj)
+        return JsonResponse(serializer.data, safe=False)
         
-#     elif request.method == 'PUT': # 여기 어떻게 해야할까
-#         data = JSONParser().parse(request)
-#         obj = Cocktail.objects.get(cocktail_name = pk)
-#         serializer = CocktailSerializer(obj,data = data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return JsonResponse(serializer.data, status = 200)
-#         else:
-#             return JsonResponse(serializer.error, status = 400)
+    elif request.method == 'PUT': # 여기 어떻게 해야할까????????????????????
+        data = JSONParser().parse(request)
+        
+        base_data = data.pop('base') #외래키 등록 필요한 항목들
+        sub_data = data.pop('sub')
+        juice_data = data.pop('juice')
+        other_data = data.pop('other')
+        glass_data = data.pop('glass')
+        
+        obj = Cocktail.objects.get(name = pk)
+        if serializer.is_valid() and Glass.objects.filter(name = glass_data).exists() and check_cocktail_data(Base,base_data) and check_cocktail_data(Sub,sub_data) and check_cocktail_data(Juice,juice_data) and check_cocktail_data(Other,other_data):
+            # --------- 중간 테이블 업데이트 로직 짜야함 -------------
+            # 1. 다른 부분만 검색해서 업데이트
+            # 2. 전체 삭제 후 전체 생성
+            
+            serializer = CocktailSerializer(obj,data = data)
+            serializer.save()
+            return JsonResponse(serializer.data, status = 200)
+        else:
+            return JsonResponse(serializer.error, status = 400)
 
-#     elif request.method == 'DELETE':
-#         cocktail = Cocktail.objects.get(cocktail_name = pk)
-#         bases = cocktail.base_cocktail.all()
-#         subs = cocktail.sub_cocktail.all()
-#         juices = cocktail.juice_cocktail.all()
-#         others = cocktail.other_cocktail.all()
-
-#         for obj in bases:
-#             obj.cocktails.remove(cocktail)
-#             if not obj.cocktails.exists():
-#                 obj.delete()
-
-#         for obj in subs:
-#             obj.cocktails.remove(cocktail)
-#             if not obj.cocktails.exists():
-#                 obj.delete()
-
-#         for obj in juices:
-#             obj.cocktails.remove(cocktail)
-#             if not obj.cocktails.exists():
-#                 obj.delete()
-
-#         for obj in others:
-#             obj.cocktails.remove(cocktail)
-#             if not obj.cocktails.exists():
-#                 obj.delete()
-
-#         cocktail.delete()
-#         return HttpResponse(status=200)
+    elif request.method == 'DELETE':
+        cocktail = Cocktail.objects.get(name = pk) # 예외처리 필요
+        for obj in CocktailBase.objects.filter(cocktail = cocktail):
+            obj.delete()
+        for obj in CocktailSub.objects.filter(cocktail = cocktail):
+            obj.delete()
+        for obj in CocktailJuice.objects.filter(cocktail = cocktail):
+            obj.delete()
+        for obj in CocktailOther.objects.filter(cocktail = cocktail):
+            obj.delete()
+        cocktail.delete()
+    
+        
+        
 
 def recipes(request):
     if request.method == 'GET':
         query_set = Cocktail.objects.all()
-        # names = CocktailNameSerializer(query_set, many = True)
-        # return JsonResponse(names.data, safe = False)
-        
         data = {"cocktails" : []}
         for cocktail in query_set:
             data["cocktails"].append(cocktail.name)

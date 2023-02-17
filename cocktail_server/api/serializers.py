@@ -10,6 +10,14 @@ class GlassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Glass
         fields = ('name',)
+        
+    def update(self,obj,validated_data): #잔 이름 수정 함수 -> PK 수정 불가능하므로 새로 만든 후 테이블 다시 연결
+        new_glass = Glass.objects.create(name = validated_data['name'])
+        for cocktail in Cocktail.objects.filter(glass = obj):
+            cocktail.glass = new_glass
+            cocktail.save()
+        obj.delete()
+        return new_glass
 
 class BaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,7 +39,7 @@ class OtherSerializer(serializers.ModelSerializer):
         model = Other
         fields = '__all__'
         
-class CocktailSerializer(serializers.ModelSerializer): #이 방식이 제일 나은듯
+class CocktailSerializer(serializers.ModelSerializer): 
     glass = serializers.StringRelatedField(read_only = True)
     base = serializers.SerializerMethodField(read_only = True)
     sub = serializers.SerializerMethodField(read_only = True)
