@@ -33,43 +33,26 @@ def cocktails(request):
         other_data = data.pop('other')
         glass_data = data.pop('glass')
         
-        serializer = CocktailSerializer(data = data)
+        serializer = CocktailSerializer(data = data) 
         
-        # 유효성 검사
+        # ---유효성 검사---
         if (serializer.is_valid()
         and Glass.objects.filter(name = glass_data).exists()
         and check_cocktail_data(Base,base_data)
         and check_cocktail_data(Sub,sub_data)
         and check_cocktail_data(Juice,juice_data)
         and check_cocktail_data(Other,other_data)):
-            #데이터 유효할 때
-        # if serializer.is_valid():
+            
+            # --- 유효성 검사 통과 ---
             cocktail = serializer.save()
             
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
-            
-            create_mapping_table(CocktailBase,base_data,cocktail,Base)
+            # --- 중간 테이블 연결 ---
+            create_mapping_table(CocktailBase,base_data,cocktail,Base) 
             create_mapping_table(CocktailSub,sub_data,cocktail,Sub)
             create_mapping_table(CocktailJuice,juice_data,cocktail,Juice)
             create_mapping_table(CocktailOther,other_data,cocktail,Other)
-            # for data in base_data: # base 연결
-            #     CocktailBase.objects.create(cocktail = cocktail, base = data['name'], amount = data['amount'])
-
-            # for name in sub_data.keys(): # sub 연결
-            #     sub = get_object_or_404(Sub, name = name)
-            #     amount = sub_data[name]
-            #     CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
-
-            # for name in juice_data.keys(): # other 연결
-            #     juice = get_object_or_404(Juice, name = name)
-            #     amount = juice_data[name]
-            #     CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
-
-            # for name in other_data.keys(): # other 연결
-            #     other = get_object_or_404(Other, name = name)
-            #     amount = other_data[name]
-            #     CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
             
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
@@ -127,7 +110,7 @@ def bases(request):
             serializer.save()
             return JsonResponse(serializer.data, status = 200)
         else:
-            if AttributeError:
+            if AttributeError: # --------  여기 예외처리 다시 해야함
                 error_data = {"error_code":400, "error_message":f"{data['name']}는 이미 존재하는 재료입니다"}
                 return JsonResponse(error_data, status = 400)
             else:
@@ -138,7 +121,7 @@ def base(request,pk):
     if request.method == 'PUT':
         obj = get_object_or_404(Base,name = pk)
         data = JSONParser().parse(request)
-        serializer = GlassSerializer(obj,data = data)
+        serializer = BaseSerializer(obj,data = data)
         
         if serializer.is_valid():
             serializer.save()
@@ -152,7 +135,7 @@ def base(request,pk):
         return JsonResponse(data,status = 200)
             
 @csrf_exempt
-def sub(request):
+def subs(request):
     if request.method == 'GET':
         query_set = Sub.objects.all()
         serializer = SubSerializer(query_set,many = True)
@@ -170,9 +153,27 @@ def sub(request):
                 return JsonResponse(error_data, status = 400)
             else:
                 return JsonResponse(serializer.error, status = 400)
+            
+@csrf_exempt
+def sub(request,pk):
+    if request.method == 'PUT':
+        obj = get_object_or_404(Sub,name = pk)
+        data = JSONParser().parse(request)
+        serializer = BaseSerializer(obj,data = data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data,status = 200)
+        return JsonResponse(serializer.errors, status = 404)
+    
+    elif request.method == 'DELETE':
+        obj = get_object_or_404(Sub,name = pk)
+        obj.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
 
 @csrf_exempt
-def juice(request):
+def juices(request):
     if request.method == 'GET':
         query_set = Juice.objects.all()
         serializer = JuiceSerializer(query_set,many = True)
@@ -189,10 +190,18 @@ def juice(request):
                 error_data = {"error_code":400, "error_message":f"{data['name']} is already exist"}
                 return JsonResponse(error_data, status = 400)
             else:
-                return JsonResponse(serializer.error, status = 400)            
+                return JsonResponse(serializer.error, status = 400) 
             
 @csrf_exempt
-def other(request):
+def juice(request,pk):
+    if request.method == 'DELETE':
+        obj = get_object_or_404(Juice,name = pk)
+        obj.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
+            
+@csrf_exempt
+def others(request):
     if request.method == 'GET':
         query_set = Other.objects.all()
         serializer = OtherSerializer(query_set,many = True)
@@ -212,13 +221,21 @@ def other(request):
                 return JsonResponse(serializer.error, status = 400) 
             
 @csrf_exempt
-def cocktail(request,pk): # ---------- 여기서 부터 수정 필요 ---------------
+def other(request,pk):
+    if request.method == 'DELETE':
+        obj = get_object_or_404(Other,name = pk)
+        obj.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
+            
+@csrf_exempt
+def cocktail(request,pk):
     if request.method == 'GET':
         obj = Cocktail.objects.get(name = pk)
         serializer = CocktailSerializer(obj)
         return JsonResponse(serializer.data, safe=False)
         
-    elif request.method == 'PUT': # 여기 어떻게 해야할까????????????????????
+    elif request.method == 'PUT': 
         data = JSONParser().parse(request)
         
         base_data = data.pop('base') #외래키 등록 필요한 항목들
@@ -243,42 +260,19 @@ def cocktail(request,pk): # ---------- 여기서 부터 수정 필요 ----------
             for obj in CocktailOther.objects.filter(cocktail = cocktail):
                 obj.delete()
             
-            alcohol_amount = 0
-            cocktail_amount = 0
-            
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
+            # --- 중간 테이블 연결 ---
+            create_mapping_table(CocktailBase,base_data,cocktail,Base) 
+            create_mapping_table(CocktailSub,sub_data,cocktail,Sub)
+            create_mapping_table(CocktailJuice,juice_data,cocktail,Juice)
+            create_mapping_table(CocktailOther,other_data,cocktail,Other)
             
-            for name in base_data.keys(): # base 연결
-                base = get_object_or_404(Base, name = name)
-                amount = base_data[name]
-                cocktail_amount += amount
-                alcohol_amount += amount * (base.alcohol_degree / 100)
-                CocktailBase.objects.create(cocktail = cocktail, base = base, amount = amount)
-
-            for name in sub_data.keys(): # sub 연결
-                sub = get_object_or_404(Sub, name = name)
-                amount = sub_data[name]
-                cocktail_amount += amount
-                alcohol_amount += amount * (sub.alcohol_degree / 100)
-                CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
-
-            for name in juice_data.keys(): # other 연결
-                juice = get_object_or_404(Juice, name = name)
-                amount = juice_data[name]
-                cocktail_amount += amount
-                CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
-
-            for name in other_data.keys(): # other 연결
-                other = get_object_or_404(Other, name = name)
-                amount = other_data[name]
-                CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
-            
-            cocktail.alcohol_degree = (alcohol_amount / cocktail_amount) * 100
             cocktail.save()
-            return JsonResponse(serializer.data, status = 200)
-        else:
-            return JsonResponse(serializer.error, status = 400)
+            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        
+        error_data = {"error_code":400, "error_message":f"invalid data"}
+        return JsonResponse(error_data, status = 400)
 
     elif request.method == 'DELETE': # 칵테일 삭제
         cocktail = Cocktail.objects.get(name = pk) # 예외처리 필요
@@ -291,9 +285,6 @@ def cocktail(request,pk): # ---------- 여기서 부터 수정 필요 ----------
         for obj in CocktailOther.objects.filter(cocktail = cocktail):
             obj.delete()
         cocktail.delete()
-    
-        
-        
 
 def recipes(request):
     if request.method == 'GET':
@@ -303,65 +294,86 @@ def recipes(request):
             data["cocktails"].append(cocktail.name)
         return JsonResponse(data)
 
+def ingredients(request):
+    if request.method == 'GET':
+        data = {"base":[],"sub":[],"juice":[],"other":[]}
+        
+        base_query = Base.objects.all()
+        for base in base_query:
+            data['base'].append(base.name)
+            
+        sub_query = Sub.objects.all()
+        for sub in sub_query:
+            data['sub'].append(sub.name)
+            
+        juice_query = Juice.objects.all()
+        for juice in juice_query:
+            data['juice'].append(juice.name)
+            
+        other_query = Other.objects.all()
+        for other in other_query:
+            data['other'].append(other.name)
+    
+        return JsonResponse(data,status = 200)
 
-# @csrf_exempt
-# def search(request): # base filtering 예외처리 필요
-#     if request.method == 'GET':
-#         error_code = None
-#         query_set = Cocktail.objects.all()
+@csrf_exempt
+def search(request): # base filtering 예외처리 필요
+    if request.method == 'GET':
+        error_code = None
+        query_set = Cocktail.objects.all()
 
-#         if 'base' in request.GET:
-#             base_data = list(request.GET['base'].split(',')) 
-#             for name in base_data:
-#                 if Base.objects.filter(drink_name = name).exists(): #여기 예외처리 error_code 필요
-#                     data = Base.objects.get(drink_name = name).cocktails.all()
-#                     query_set = query_set&data
-#                 else:
-#                     error_code = 400
-#                     error_message = (f'there is no {name} in Base')
+        if 'base' in request.GET:
+            base_data = list(request.GET['base'].split(','))
+            # ------- N+1 Problem 발생 ----------
+            for name in base_data:
+                if Base.objects.filter(name = name).exists(): #여기 예외처리 error_code 필요
+                    data = Base.objects.get(name = name).cocktail.all()
+                    query_set = query_set&data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Base')
                 
-#         if 'sub' in request.GET:
-#             sub_data = list(request.GET['sub'].split(',')) 
-#             for name in sub_data:
-#                 if Sub.objects.filter(drink_name = name).exists():
-#                     data = Sub.objects.get(drink_name = name).cocktails.all()
-#                     query_set = query_set&data
-#                 else:
-#                     error_code = 400
-#                     error_message = (f'there is no {name} in Sub')
+        if 'sub' in request.GET:
+            sub_data = list(request.GET['sub'].split(',')) 
+            for name in sub_data:
+                if Sub.objects.filter(name = name).exists():
+                    data = Sub.objects.get(name = name).cocktails.all()
+                    query_set = query_set&data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Sub')
 
-#         if 'juice' in request.GET:
-#             juice_data = list(request.GET['juice'].split(','))
-#             print(f'first query {query_set}')
-#             for name in juice_data:
-#                 if Juice.objects.filter(drink_name = name).exists():
-#                     data = Juice.objects.get(drink_name = name).cocktails.all()
-#                     query_set = query_set&data
-#                 else:
-#                     error_code = 400
-#                     error_message = (f'there is no {name} in Juice')
+        if 'juice' in request.GET:
+            juice_data = list(request.GET['juice'].split(','))
+            print(f'first query {query_set}')
+            for name in juice_data:
+                if Juice.objects.filter(name = name).exists():
+                    data = Juice.objects.get(name = name).cocktails.all()
+                    query_set = query_set&data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Juice')
 
-#         if 'other' in request.GET:
-#             other_data = list(request.GET['other'].split(','))
-#             for name in other_data:
-#                 if Other.objects.filter(name = name).exists():
-#                     data = Other.objects.get(name = name).cocktails.all()
-#                     query_set = query_set&data
-#                 else:
-#                     error_code = 400
-#                     error_message = (f'there is no {name} in Other')
+        if 'other' in request.GET:
+            other_data = list(request.GET['other'].split(','))
+            for name in other_data:
+                if Other.objects.filter(name = name).exists():
+                    data = Other.objects.get(name = name).cocktails.all()
+                    query_set = query_set&data
+                else:
+                    error_code = 400
+                    error_message = (f'there is no {name} in Other')
 
+        if not query_set: # --------- 없는 쿼리 조합 구현 -----------
+            error_code = 400
+            error_message = "없는 조합입니다"
 
-#         if not query_set:
-#             error_code = 400
-#             error_message = "없는 조합입니다"
-
-#         if error_code == None:
-#             serializer = CocktailNameSerializer(query_set, many = True)
-#             return JsonResponse(serializer.data, safe = False)
-#         else:
-#             response_data = {"error_code" : error_code, "error_message": error_message, "data" : []}
-#             return JsonResponse(response_data, status = 400)
+        if error_code == None:
+            serializer = CocktailNameSerializer(query_set, many = True)
+            return JsonResponse(serializer.data, safe = False)
+        else:
+            response_data = {"error_code" : error_code, "error_message": error_message, "data" : []}
+            return JsonResponse(response_data, status = 400)
 
 
 # def ingredients(request):

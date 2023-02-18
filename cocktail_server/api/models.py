@@ -1,7 +1,6 @@
 from django.db import models
 # from api.validators import check_amount_int
 
-#pk값 다시 설절하자
 class Glass(models.Model): # 서빙 글라스 모델
     name = models.CharField(primary_key = True,max_length=255)
 
@@ -13,11 +12,6 @@ class Cocktail(models.Model):
     recipe = models.TextField()
     img_url = models.URLField()
     glass = models.ForeignKey(Glass, on_delete=models.CASCADE, null=True, related_name = 'cocktail')
-    
-    # base = models.ManyToManyField(Base,through = 'CocktailBase',null = True,related_name = 'cocktail')
-    # sub = models.ManyToManyField(Sub,through = 'CocktailSub',null = True,related_name = 'cocktail')
-    # juice = models.ManyToManyField(Juice,through = 'CocktailJuice',null = True,related_name = 'cocktail')
-    # other = models.ManyToManyField(Other,through = 'CocktailOther',null = True,related_name = 'cocktail')
     
     def __str__(self):
         return self.name
