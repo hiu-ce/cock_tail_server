@@ -6,11 +6,16 @@ from rest_framework import views, response, status
 from .models import Cocktail, Glass, Base, Sub, Juice, Other, CocktailBase, CocktailSub,CocktailJuice,CocktailOther
 from .serializers import CocktailSerializer, GlassSerializer, BaseSerializer, SubSerializer,JuiceSerializer,OtherSerializer,CocktailNameSerializer
 
-def check_cocktail_data(model,data): #칵테일 레시피 생성시 들어온 재료가 존재하는지 확인하는 함수
-    for name in data.keys():
-        if not model.objects.filter(name = name).exists():
+def check_cocktail_data(model,query_set): #칵테일 레시피 생성시 들어온 재료가 존재하는지 확인하는 함수
+    for data in query_set:
+        if not model.objects.filter(name = data['name']).exists():
             return False
     return True
+
+def create_mapping_table(mapping_table_model,query_set,cocktail,ingredient_model):
+    for data in query_set:
+        name = ingredient_model.objects.get(name = data['name'])
+        mapping_table_model.objects.create(cocktail = cocktail, name = name, amount = data['amount'])
 
 @csrf_exempt
 def cocktails(request):
@@ -31,41 +36,41 @@ def cocktails(request):
         serializer = CocktailSerializer(data = data)
         
         # 유효성 검사
-        if serializer.is_valid() and Glass.objects.filter(name = glass_data).exists() and check_cocktail_data(Base,base_data) and check_cocktail_data(Sub,sub_data) and check_cocktail_data(Juice,juice_data) and check_cocktail_data(Other,other_data):
-            # 데이터 유효할 때
+        if (serializer.is_valid()
+        and Glass.objects.filter(name = glass_data).exists()
+        and check_cocktail_data(Base,base_data)
+        and check_cocktail_data(Sub,sub_data)
+        and check_cocktail_data(Juice,juice_data)
+        and check_cocktail_data(Other,other_data)):
+            #데이터 유효할 때
+        # if serializer.is_valid():
             cocktail = serializer.save()
-            alcohol_amount = 0
-            cocktail_amount = 0
             
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
             
-            for name in base_data.keys(): # base 연결
-                base = get_object_or_404(Base, name = name)
-                amount = base_data[name]
-                cocktail_amount += amount
-                alcohol_amount += amount * (base.alcohol_degree / 100)
-                CocktailBase.objects.create(cocktail = cocktail, base = base, amount = amount)
+            create_mapping_table(CocktailBase,base_data,cocktail,Base)
+            create_mapping_table(CocktailSub,sub_data,cocktail,Sub)
+            create_mapping_table(CocktailJuice,juice_data,cocktail,Juice)
+            create_mapping_table(CocktailOther,other_data,cocktail,Other)
+            # for data in base_data: # base 연결
+            #     CocktailBase.objects.create(cocktail = cocktail, base = data['name'], amount = data['amount'])
 
-            for name in sub_data.keys(): # sub 연결
-                sub = get_object_or_404(Sub, name = name)
-                amount = sub_data[name]
-                cocktail_amount += amount
-                alcohol_amount += amount * (sub.alcohol_degree / 100)
-                CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
+            # for name in sub_data.keys(): # sub 연결
+            #     sub = get_object_or_404(Sub, name = name)
+            #     amount = sub_data[name]
+            #     CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
 
-            for name in juice_data.keys(): # other 연결
-                juice = get_object_or_404(Juice, name = name)
-                amount = juice_data[name]
-                cocktail_amount += amount
-                CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
+            # for name in juice_data.keys(): # other 연결
+            #     juice = get_object_or_404(Juice, name = name)
+            #     amount = juice_data[name]
+            #     CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
 
-            for name in other_data.keys(): # other 연결
-                other = get_object_or_404(Other, name = name)
-                amount = other_data[name]
-                CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
+            # for name in other_data.keys(): # other 연결
+            #     other = get_object_or_404(Other, name = name)
+            #     amount = other_data[name]
+            #     CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
             
-            cocktail.alcohol_degree = (alcohol_amount / cocktail_amount) * 100
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         
@@ -109,7 +114,7 @@ def glass(request,pk):
         return JsonResponse(data,status = 200)
         
 @csrf_exempt
-def base(request):
+def bases(request):
     if request.method == 'GET':
         query_set = Base.objects.all()
         serializer = BaseSerializer(query_set,many = True)
@@ -127,6 +132,24 @@ def base(request):
                 return JsonResponse(error_data, status = 400)
             else:
                 return JsonResponse(serializer.error, status = 400)
+            
+@csrf_exempt
+def base(request,pk):
+    if request.method == 'PUT':
+        obj = get_object_or_404(Base,name = pk)
+        data = JSONParser().parse(request)
+        serializer = GlassSerializer(obj,data = data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data,status = 200)
+        return JsonResponse(serializer.errors, status = 404)
+    
+    elif request.method == 'DELETE':
+        obj = get_object_or_404(Base,name = pk)
+        obj.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
             
 @csrf_exempt
 def sub(request):
@@ -204,19 +227,60 @@ def cocktail(request,pk): # ---------- 여기서 부터 수정 필요 ----------
         other_data = data.pop('other')
         glass_data = data.pop('glass')
         
-        obj = Cocktail.objects.get(name = pk)
+        cocktail = Cocktail.objects.get(name = pk)
+        serializer = CocktailSerializer(cocktail,data = data)
         if serializer.is_valid() and Glass.objects.filter(name = glass_data).exists() and check_cocktail_data(Base,base_data) and check_cocktail_data(Sub,sub_data) and check_cocktail_data(Juice,juice_data) and check_cocktail_data(Other,other_data):
+            serializer.save()
             # --------- 중간 테이블 업데이트 로직 짜야함 -------------
             # 1. 다른 부분만 검색해서 업데이트
-            # 2. 전체 삭제 후 전체 생성
+            # 2. 전체 삭제 후 전체 생성 -> 결정.(mappng table 많아봐야 몇개 안될 듯)
+            for obj in CocktailBase.objects.filter(cocktail = cocktail):
+                obj.delete()
+            for obj in CocktailSub.objects.filter(cocktail = cocktail):
+                obj.delete()
+            for obj in CocktailJuice.objects.filter(cocktail = cocktail):
+                obj.delete()
+            for obj in CocktailOther.objects.filter(cocktail = cocktail):
+                obj.delete()
             
-            serializer = CocktailSerializer(obj,data = data)
-            serializer.save()
+            alcohol_amount = 0
+            cocktail_amount = 0
+            
+            glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
+            cocktail.glass = glass
+            
+            for name in base_data.keys(): # base 연결
+                base = get_object_or_404(Base, name = name)
+                amount = base_data[name]
+                cocktail_amount += amount
+                alcohol_amount += amount * (base.alcohol_degree / 100)
+                CocktailBase.objects.create(cocktail = cocktail, base = base, amount = amount)
+
+            for name in sub_data.keys(): # sub 연결
+                sub = get_object_or_404(Sub, name = name)
+                amount = sub_data[name]
+                cocktail_amount += amount
+                alcohol_amount += amount * (sub.alcohol_degree / 100)
+                CocktailSub.objects.create(cocktail = cocktail, sub = sub, amount = amount)
+
+            for name in juice_data.keys(): # other 연결
+                juice = get_object_or_404(Juice, name = name)
+                amount = juice_data[name]
+                cocktail_amount += amount
+                CocktailJuice.objects.create(cocktail = cocktail, juice = juice, amount = amount)
+
+            for name in other_data.keys(): # other 연결
+                other = get_object_or_404(Other, name = name)
+                amount = other_data[name]
+                CocktailOther.objects.create(cocktail = cocktail, other = other, amount = amount)
+            
+            cocktail.alcohol_degree = (alcohol_amount / cocktail_amount) * 100
+            cocktail.save()
             return JsonResponse(serializer.data, status = 200)
         else:
             return JsonResponse(serializer.error, status = 400)
 
-    elif request.method == 'DELETE':
+    elif request.method == 'DELETE': # 칵테일 삭제
         cocktail = Cocktail.objects.get(name = pk) # 예외처리 필요
         for obj in CocktailBase.objects.filter(cocktail = cocktail):
             obj.delete()
