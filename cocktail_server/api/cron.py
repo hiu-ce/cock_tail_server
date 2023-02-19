@@ -1,16 +1,14 @@
 from .models import Cocktail,TodayDrink
 
-def todaydrink():
-    querySet = TodayDrink.objects.all()
-    todayDrink = Cocktail.objects.order_by("?").first()
-
-    if querySet.exists():
-        obj_id = querySet.first().id
-        obj = querySet.get(id=obj_id)
-        obj.drink_name = todayDrink
-        obj.save()
+def todayDrink():
+    today_drink = Cocktail.objects.order_by("?").first()
+    last_drink = TodayDrink.objects.all().first()
+    
+    if last_drink:
+        last_drink.cocktail = today_drink
+        last_drink.save()
     else:
-        newObj = querySet.create(drink_name = todayDrink)
-        newObj.save()
+        new_obj = TodayDrink.objects.create(cocktail = today_drink)
+        new_obj.save()
 
     

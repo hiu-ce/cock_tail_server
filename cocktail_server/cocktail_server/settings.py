@@ -165,5 +165,5 @@ REST_FRAMEWORK = {
 
 CRONJOBS = [
     # ('*/1 * * * *', 'api.cron.todaydrink','>> /Users/kimseonghun/cocktail_server/cocktail_server/log/cron.log')
-    ('*/1 * * * *', 'api.cron.todaydrink')
+    ('*/1 * * * *', 'api.cron.todayDrink', '>> /workspace/CocktailBackEnd/cock_tail_server/cocktail_server/log/cron.log2>&1')
 ]

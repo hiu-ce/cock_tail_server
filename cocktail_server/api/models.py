@@ -56,3 +56,6 @@ class CocktailOther(models.Model):
     cocktail = models.ForeignKey(Cocktail, on_delete=models.CASCADE, related_name = 'cocktail_other')
     name = models.ForeignKey(Other, on_delete=models.CASCADE, related_name = 'cocktail_other') # other-name
     amount = models.CharField(max_length = 50, blank = True)
+    
+class TodayDrink(models.Model):
+    cocktail = models.ForeignKey(Cocktail, on_delete=models.CASCADE, related_name ='today_drink')

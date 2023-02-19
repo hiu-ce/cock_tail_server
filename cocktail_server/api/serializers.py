@@ -69,7 +69,7 @@ class CocktailOtherSerializer(serializers.ModelSerializer):
 class CocktailSerializer(serializers.ModelSerializer): 
     glass = serializers.StringRelatedField(read_only = True)
     base = CocktailBaseSerializer(many = True,read_only = True, source ='cocktail_base')
-    sub =  CocktailSubSerializer(many = True,read_only = True, source = 'cocktail_sub')
+    sub =  CocktailSubSerializer(many = True, read_only = True, source = 'cocktail_sub')
     juice = CocktailJuiceSerializer(many = True,read_only = True, source = 'cocktail_juice')
     other = CocktailOtherSerializer(many = True,read_only = True, source ='cocktail_other')
 

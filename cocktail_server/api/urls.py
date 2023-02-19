@@ -2,21 +2,21 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('cocktails',views.cocktails),
-    path('cocktails/<str:pk>',views.cocktail),
-    path('bases',views.bases),
-    path('bases/<str:pk>',views.base),
-    path('subs',views.subs),
-    path('subs/<str:pk>',views.sub),
-    path('juices',views.juice),
-    path('juices/<str:pk>',views.juice),    
-    path('others',views.others),
-    path('others<str:pk>',views.other),
-    path('glasses',views.glasses),
-    path('glasses/<str:pk>',views.glass),
-    path('recipes',views.recipes),
+    path('cocktails',views.cocktails), # 칵테일 레시피 전체 출력
+    path('cocktails/<str:pk>',views.cocktail), # 레시피 일부 출력
+    path('cocktail_names',views.cocktail_names), # 칵테일 이름 전체 출력
+    path('ingredients',views.ingredients), # 조합 재료 전체 출력
+    path('ingredients/bases',views.bases),
+    path('ingredients/bases/<str:pk>',views.base),
+    path('ingredients/subs',views.subs),
+    path('ingredients/subs/<str:pk>',views.sub),
+    path('ingredients/juices',views.juice),
+    path('ingredients/juices/<str:pk>',views.juice),    
+    path('ingredients/others',views.others),
+    path('ingredients/others<str:pk>',views.other),
+    path('ingredients/glasses',views.glasses),
+    path('ingredients/glasses/<str:pk>',views.glass),
     path('search',views.search),
     # # path('reset',views.reset),
-    path('ingredients',views.ingredients),
-    # # path('todaydrink',views.todaydrink),   
+    path('today-drink',views.todaydrink),   
 ]
