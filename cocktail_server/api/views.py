@@ -362,15 +362,15 @@ def search(request):
             serializer = CocktailNameSerializer(and_query_set, many = True)
             return JsonResponse(serializer.data, safe = False)
 
-# def reset(request):
-#     if request.method == 'GET' or request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
-#         Cocktail.objects.all().delete()
-#         Base.objects.all().delete()
-#         Sub.objects.all().delete()
-#         Juice.objects.all().delete()
-#         Other.objects.all().delete()
+def reset(request):
+    if request.method == 'GET' or request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
+        Cocktail.objects.all().delete()
+        Base.objects.all().delete()
+        Sub.objects.all().delete()
+        Juice.objects.all().delete()
+        Other.objects.all().delete()
 
-#         return HttpResponse(status = 200)
+        return HttpResponse(status = 200)
 
 def todaydrink(request): #오늘의 추천 칵테일 조회 함수
     obj = TodayDrink.objects.all()
