@@ -1,6 +1,6 @@
 from .models import Cocktail,TodayDrink
 
-def todayDrink():
+def todayDrink(): #오늘의 추천 칵테일 crontab 함수
     today_drink = Cocktail.objects.order_by("?").first()
     last_drink = TodayDrink.objects.all().first()
     

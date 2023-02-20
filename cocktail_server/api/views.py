@@ -6,13 +6,21 @@ from rest_framework import views, response, status
 from .models import *
 from .serializers import *
 
-def check_cocktail_data(model,query_set): #칵테일 레시피 생성시 들어온 재료가 존재하는지 확인하는 함수
+def check_cocktail_data(model,query_set): 
+    # 데이터 유효성 검사 함수 (model = 검사할 데이터 모델, query_set = 검사할 데이터(딕셔너리형))
     for data in query_set:
         if not model.objects.filter(name = data['name']).exists():
             return False
     return True
 
-def create_mapping_table(mapping_table_model,query_set,cocktail,ingredient_model):
+def create_mapping_table(mapping_table_model,query_set,cocktail,ingredient_model): 
+    '''
+    칵테일-재료 연결 및 중간 테이블 제작 함수
+    mapping_table_model = 중간 테이블 Model
+    query_set = 재료 데이터 (딕셔너리 형태)
+    cocktail = 칵테일 objcet
+    ingredient_model = 재료 Model
+    '''
     for data in query_set:
         name = ingredient_model.objects.get(name = data['name'])
         mapping_table_model.objects.create(cocktail = cocktail, name = name, amount = data['amount'])
@@ -27,7 +35,7 @@ def cocktails(request):
     elif request.method == 'POST': # 칵테일 레시피 등록
         data = JSONParser().parse(request)
         
-        base_data = data.pop('base') #외래키 등록 필요한 항목들
+        base_data = data.pop('base') #외래키 등록 필요한 항목들 파싱
         sub_data = data.pop('sub')
         juice_data = data.pop('juice')
         other_data = data.pop('other')
@@ -62,7 +70,7 @@ def cocktails(request):
 
     
 @csrf_exempt
-def glasses(request):
+def glasses(request): # 서빙 글라스 출력, 추가 함수
     if request.method == 'GET':
         glass = Glass.objects.all()
         serializer = GlassSerializer(glass, many=True)
@@ -213,7 +221,7 @@ def other(request,pk):
         return JsonResponse(data,status = 200)
             
 @csrf_exempt
-def cocktail(request,pk):
+def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
     if request.method == 'GET':
         obj = Cocktail.objects.get(name = pk)
         serializer = CocktailSerializer(obj)
@@ -222,7 +230,7 @@ def cocktail(request,pk):
     elif request.method == 'PUT': 
         data = JSONParser().parse(request)
         
-        base_data = data.pop('base') #외래키 등록 필요한 항목들
+        base_data = data.pop('base') #외래키 등록 필요한 항목들 파싱
         sub_data = data.pop('sub')
         juice_data = data.pop('juice')
         other_data = data.pop('other')
@@ -270,7 +278,7 @@ def cocktail(request,pk):
             obj.delete()
         cocktail.delete()
 
-def cocktail_names(request):
+def cocktail_names(request): # 칵테일 이름만 출력하는 함수
     if request.method == 'GET':
         query_set = Cocktail.objects.all()
         data = {"cocktails" : []}
@@ -278,7 +286,7 @@ def cocktail_names(request):
             data["cocktails"].append(cocktail.name)
         return JsonResponse(data)
 
-def ingredients(request):
+def ingredients(request): # 칵테일 재료 출력하는 함수
     if request.method == 'GET':
         data = {"base":[],"sub":[],"juice":[],"other":[]}
         
@@ -301,13 +309,19 @@ def ingredients(request):
         return JsonResponse(data,status = 200)
 
 @csrf_exempt
-def search(request): # base filtering 예외처리 필요
+def search(request):
+    '''
+    칵테일 레시피 검색 함수
+    request header로 검색 내용 주어짐
+    and_query_set과 or_query_set 두 가지 쿼리셋 제작
+    and_query_set 내용 없을때만 or_query_set 출력
+    '''
     if request.method == 'GET':
         error_code = None
         and_query_set = Cocktail.objects.all()
         or_query_set = Cocktail.objects.filter(name = "")
         
-        if 'base' in request.GET: # --- SQL logic? ---
+        if 'base' in request.GET: # --- Base 검색 ---
             base_data = list(request.GET['base'].split(','))
             cocktail_query_set = Cocktail.objects.prefetch_related('base').all()
             for name in base_data:
@@ -315,7 +329,7 @@ def search(request): # base filtering 예외처리 필요
                 and_query_set = and_query_set&query_set
                 or_query_set = or_query_set|query_set
     
-        if 'sub' in request.GET: # --- SQL logic? ---
+        if 'sub' in request.GET: # --- Sub 검색 ---
             sub_data = list(request.GET['sub'].split(','))
             cocktail_query_set = Cocktail.objects.prefetch_related('sub').all()
             for name in sub_data:
@@ -323,7 +337,7 @@ def search(request): # base filtering 예외처리 필요
                 and_query_set = and_query_set&query_set
                 or_query_set = or_query_set|query_set
 
-        if 'juice' in request.GET: # --- SQL logic? ---
+        if 'juice' in request.GET: # --- Juice 검색 ---
             juice_data = list(request.GET['juice'].split(','))
             cocktail_query_set = Cocktail.objects.prefetch_related('juice').all()
             for name in juice_data:
@@ -331,7 +345,7 @@ def search(request): # base filtering 예외처리 필요
                 and_query_set = and_query_set&query_set
                 or_query_set = or_query_set|query_set
 
-        if 'other' in request.GET: # --- SQL logic? ---
+        if 'other' in request.GET: # --- Other 검색 ---
             other_data = list(request.GET['other'].split(','))
             cocktail_query_set = Cocktail.objects.prefetch_related('other').all()
             for name in other_data:
@@ -348,40 +362,6 @@ def search(request): # base filtering 예외처리 필요
             serializer = CocktailNameSerializer(and_query_set, many = True)
             return JsonResponse(serializer.data, safe = False)
 
-
-# def ingredients(request):
-#     if request.method == 'GET':
-#         if not 'type' in request.GET:
-#             base = BaseSerializer(Base.objects.all(),many=True)
-#             sub = SubSerializer(Sub.objects.all(),many = True)
-#             juice = JuiceSerializer(Juice.objects.all(), many= True)
-#             other = OtherSerializer(Other.objects.all(), many= True)
-#             serializer = IngredientsSerializer(data={'base':base.data,'sub': sub.data,'juice' : juice.data,'other' : other.data})
-#             if serializer.is_valid():
-#                 return JsonResponse(serializer.data, safe = 200)
-#             else:
-#                 return JsonResponse(serializer.data,status=200)
-#         else:
-#             type = request.GET['type']
-#             if type == 'base':
-#                 query_set = Base.objects.all()
-#                 serializer = BaseSerializer(query_set,many = True)
-
-#             if type == 'sub':
-#                 query_set = Sub.objects.all()
-#                 serializer = SubSerializer(query_set,many = True)
-
-#             if type == 'juice':
-#                 query_set = Juice.objects.all()
-#                 serializer = JuiceSerializer(query_set,many = True)
-
-#             if type == 'other':
-#                 query_set = Other.objects.all()
-#                 serializer = OtherSerializer(query_set,many = True)
-            
-#             return JsonResponse(serializer.data, safe = False)
-        
-
 # def reset(request):
 #     if request.method == 'GET' or request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
 #         Cocktail.objects.all().delete()
@@ -392,11 +372,11 @@ def search(request): # base filtering 예외처리 필요
 
 #         return HttpResponse(status = 200)
 
-def todaydrink(request):
+def todaydrink(request): #오늘의 추천 칵테일 조회 함수
     obj = TodayDrink.objects.all()
     if obj.exists():
         today_drink = obj.first().cocktail
-    else:
+    else: # TodayDrink Object 존재 x 시 새로 생성
         today_drink = Cocktail.objects.order_by("?").first()
         new_obj = TodayDrink.objects.create(cocktail = today_drink)
         new_obj.save()
