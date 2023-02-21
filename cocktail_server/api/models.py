@@ -64,3 +64,10 @@ class CocktailOther(models.Model):  # Cocktail-Other 모델 중간 테이블
     
 class TodayDrink(models.Model): #오늘의 추천 칵테일 저장 위한 모델
     cocktail = models.ForeignKey(Cocktail, on_delete=models.CASCADE, related_name ='today_drink')
+    
+class HashTag(models.Model):
+    name = models.CharField(primary_key = True, max_length = 100)
+    cocktail = models.ManyToManyField(Cocktail, related_name = 'hashtag')
+    
+    def __str__(self):
+        return self.name

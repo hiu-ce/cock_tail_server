@@ -40,6 +40,7 @@ def cocktails(request):
         juice_data = data.pop('juice')
         other_data = data.pop('other')
         glass_data = data.pop('glass')
+        hashtag_data = data.pop('hashtag')
 
         serializer = CocktailSerializer(data = data) 
         
@@ -55,6 +56,10 @@ def cocktails(request):
             
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
+            
+            for hashtag in hashtag_data: #hashtag 연결
+                cocktail.hashtag.add(hashtag)
+            
             # --- 중간 테이블 연결 ---
             create_mapping_table(CocktailBase,base_data,cocktail,Base) 
             create_mapping_table(CocktailSub,sub_data,cocktail,Sub)
@@ -382,3 +387,28 @@ def todaydrink(request): #오늘의 추천 칵테일 조회 함수
     serializer = CocktailNameSerializer(today_drink)
     ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
     return JsonResponse(ResponseData, status=200)
+
+@csrf_exempt
+def hashtags(request):
+    if request.method == 'GET':
+        query_set = HashTag.objects.all()
+        serializer = HashTagSerializer(query_set,many = True)
+        return JsonResponse(serializer.data, safe = False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = HashTagSerializer(data = data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status = 200)
+        else:
+            return JsonResponse(serializer.errors, status = 400) 
+        
+@csrf_exempt
+def hashtag(request,pk):
+    if request.method == 'DELETE':
+        obj = get_object_or_404(HashTag,name = pk)
+        obj.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
+    

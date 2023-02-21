@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cocktail, Glass,Base,Sub,Juice,Other,CocktailBase,CocktailSub,CocktailJuice,CocktailOther
+from .models import *
 
 class CocktailNameSerializer(serializers.ModelSerializer): # 칵테일 이름만 출력
     class Meta:
@@ -46,7 +46,6 @@ class CocktailSubSerializer(serializers.ModelSerializer):
         fields = ('name','amount','alcohol_degree')
         
     def get_alcohol_degree(self,obj):
-        print(obj)
         return obj.name.alcohol_degree
         
     
@@ -65,6 +64,12 @@ class CocktailOtherSerializer(serializers.ModelSerializer):
         
     def get_name(self,obj):
         return obj.other
+    
+class HashTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HashTag
+        fields = ('name',)
+        
         
 class CocktailSerializer(serializers.ModelSerializer): # 칵테일 레시피 출력 serialzier
     glass = serializers.StringRelatedField(read_only = True)
@@ -72,8 +77,9 @@ class CocktailSerializer(serializers.ModelSerializer): # 칵테일 레시피 출
     sub =  CocktailSubSerializer(many = True, read_only = True, source = 'cocktail_sub')
     juice = CocktailJuiceSerializer(many = True,read_only = True, source = 'cocktail_juice')
     other = CocktailOtherSerializer(many = True,read_only = True, source ='cocktail_other')
+    hashtag = serializers.StringRelatedField(read_only = True, many = True)
 
     class Meta:
         model = Cocktail
-        fields = ('name','base','sub','juice','other','recipe','img_url','glass')
+        fields = ('name','base','sub','juice','other','recipe','img_url','glass','hashtag')
         
