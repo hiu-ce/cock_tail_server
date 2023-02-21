@@ -12,7 +12,7 @@ def check_cocktail_data(model,query_set):
         if not model.objects.filter(name = data['name']).exists():
             return False
     return True
-
+    
 def create_mapping_table(mapping_table_model,query_set,cocktail,ingredient_model): 
     '''
     칵테일-재료 연결 및 중간 테이블 제작 함수
@@ -50,7 +50,6 @@ def cocktails(request):
         and check_cocktail_data(Sub,sub_data)
         and check_cocktail_data(Juice,juice_data)
         and check_cocktail_data(Other,other_data)):
-            
             # --- 유효성 검사 통과 ---
             cocktail = serializer.save()
             
@@ -65,9 +64,8 @@ def cocktails(request):
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         
-        # error_data = {"error_code":400, "error_message":f"invalid data"}
-        return JsonResponse(serializer.errors, status = 400)
-
+        error_data = {"error_code":400, "error_message":f"invalid data"}
+        return JsonResponse(error_data,status = 400)
     
 @csrf_exempt
 def glasses(request): # 서빙 글라스 출력, 추가 함수
@@ -81,8 +79,8 @@ def glasses(request): # 서빙 글라스 출력, 추가 함수
         
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data, status = status.HTTP_201_CREATED)
-        return JsonResponse(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(serializer.data, status = 201)
+        return JsonResponse(serializer.errors, status = 404)
     
 @csrf_exempt
 def glass(request,pk):
@@ -319,7 +317,7 @@ def search(request):
     if request.method == 'GET':
         error_code = None
         and_query_set = Cocktail.objects.all()
-        or_query_set = Cocktail.objects.filter(name = "")
+        or_query_set = Cocktail.objects.none()
         
         if 'base' in request.GET: # --- Base 검색 ---
             base_data = list(request.GET['base'].split(','))
@@ -327,7 +325,7 @@ def search(request):
             for name in base_data:
                 query_set = cocktail_query_set.filter(base = name)
                 and_query_set = and_query_set&query_set
-                or_query_set = or_query_set|query_set
+                or_query_set = or_query_set.union(query_set)
     
         if 'sub' in request.GET: # --- Sub 검색 ---
             sub_data = list(request.GET['sub'].split(','))
@@ -335,15 +333,15 @@ def search(request):
             for name in sub_data:
                 query_set = cocktail_query_set.filter(sub = name)
                 and_query_set = and_query_set&query_set
-                or_query_set = or_query_set|query_set
-
+                or_query_set = or_query_set.union(query_set)
+                
         if 'juice' in request.GET: # --- Juice 검색 ---
             juice_data = list(request.GET['juice'].split(','))
             cocktail_query_set = Cocktail.objects.prefetch_related('juice').all()
             for name in juice_data:
                 query_set = cocktail_query_set.filter(juice = name)
                 and_query_set = and_query_set&query_set
-                or_query_set = or_query_set|query_set
+                or_query_set = or_query_set.union(query_set)
 
         if 'other' in request.GET: # --- Other 검색 ---
             other_data = list(request.GET['other'].split(','))
@@ -351,10 +349,10 @@ def search(request):
             for name in other_data:
                 query_set = cocktail_query_set.filter(other = name)
                 and_query_set = and_query_set&query_set
-                or_query_set = or_query_set|query_set
+                or_query_set = or_query_set.union(query_set)
 
         if not and_query_set: # --------- 없는 쿼리 조합 구현 -----------
-            error_code = 400
+            error_code = 200
             error_message = "없는 조합입니다"
             serializer = CocktailNameSerializer(or_query_set,many = True)
             return JsonResponse({"error_code":error_code, "error_message": error_message, "data": serializer.data},safe = False)
@@ -362,15 +360,15 @@ def search(request):
             serializer = CocktailNameSerializer(and_query_set, many = True)
             return JsonResponse(serializer.data, safe = False)
 
-def reset(request):
-    if request.method == 'GET' or request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
-        Cocktail.objects.all().delete()
-        Base.objects.all().delete()
-        Sub.objects.all().delete()
-        Juice.objects.all().delete()
-        Other.objects.all().delete()
+# def reset(request):
+#     if request.method == 'GET' or request.method == 'POST' or request.method == 'PUT' or request.method == 'DELETE':
+#         Cocktail.objects.all().delete()
+#         Base.objects.all().delete()
+#         Sub.objects.all().delete()
+#         Juice.objects.all().delete()
+#         Other.objects.all().delete()
 
-        return HttpResponse(status = 200)
+#         return HttpResponse(status = 200)
 
 def todaydrink(request): #오늘의 추천 칵테일 조회 함수
     obj = TodayDrink.objects.all()
