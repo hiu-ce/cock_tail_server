@@ -121,7 +121,7 @@ def bases(request):
             serializer.save()
             return JsonResponse(serializer.data, status = 200)
         else:
-            return JsonResponse(serializer.error, status = 400)
+            return JsonResponse(serializer.errors, status = 400)
             
 @csrf_exempt
 def base(request,pk):
@@ -155,7 +155,7 @@ def subs(request):
             serializer.save()
             return JsonResponse(serializer.data, status = 200)
         else:
-            return JsonResponse(serializer.error, status = 400)
+            return JsonResponse(serializer.errors, status = 400)
             
 @csrf_exempt
 def sub(request,pk):
@@ -189,7 +189,7 @@ def juices(request):
             serializer.save()
             return JsonResponse(serializer.data, status = 200)
         else:
-            return JsonResponse(serializer.error, status = 400) 
+            return JsonResponse(serializer.errors, status = 400) 
             
 @csrf_exempt
 def juice(request,pk):
@@ -213,7 +213,7 @@ def others(request):
             serializer.save()
             return JsonResponse(serializer.data, status = 200)
         else:
-            return JsonResponse(serializer.error, status = 400) 
+            return JsonResponse(serializer.errors, status = 400) 
             
 @csrf_exempt
 def other(request,pk):
@@ -238,6 +238,7 @@ def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
         juice_data = data.pop('juice')
         other_data = data.pop('other')
         glass_data = data.pop('glass')
+        hashtag_data = data.pop('hashtag')
         
         cocktail = Cocktail.objects.get(name = pk)
         serializer = CocktailSerializer(cocktail,data = data)
@@ -254,9 +255,13 @@ def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
                 obj.delete()
             for obj in CocktailOther.objects.filter(cocktail = cocktail):
                 obj.delete()
+            cocktail.hashtag.clear()
             
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
+            
+            for hashtag in hashtag_data: #hashtag 연결
+                cocktail.hashtag.add(hashtag)
             # --- 중간 테이블 연결 ---
             create_mapping_table(CocktailBase,base_data,cocktail,Base) 
             create_mapping_table(CocktailSub,sub_data,cocktail,Sub)
@@ -355,6 +360,14 @@ def search(request):
                 query_set = cocktail_query_set.filter(other = name)
                 and_query_set = and_query_set&query_set
                 or_query_set = or_query_set.union(query_set)
+                
+        if 'hashtag' in request.GET: # --- HashTag 검색 ---
+            other_data = list(request.GET['hashtag'].split(','))
+            cocktail_query_set = Cocktail.objects.prefetch_related('hashtag').all()
+            for name in other_data:
+                query_set = cocktail_query_set.filter(hashtag = name)
+                and_query_set = and_query_set&query_set
+                or_query_set = or_query_set.union(query_set)
 
         if not and_query_set: # --------- 없는 쿼리 조합 구현 -----------
             error_code = 200
@@ -384,7 +397,7 @@ def todaydrink(request): #오늘의 추천 칵테일 조회 함수
         new_obj = TodayDrink.objects.create(cocktail = today_drink)
         new_obj.save()
     
-    serializer = CocktailNameSerializer(today_drink)
+    serializer = CocktailSerializer(today_drink)
     ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
     return JsonResponse(ResponseData, status=200)
 

@@ -17,6 +17,7 @@ urlpatterns = [
     path('glasses',views.glasses),
     path('glasses/<str:pk>',views.glass),
     path('hashtags',views.hashtags),
+    path('hashtags/<str:pk>',views.hashtag),
     path('search',views.search),
     # # path('reset',views.reset),
     path('today-drink',views.todaydrink),   

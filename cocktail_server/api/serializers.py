@@ -36,6 +36,10 @@ class CocktailBaseSerializer(serializers.ModelSerializer): # 중간 테이블
         model = CocktailBase
         fields = ('name','amount','alcohol_degree')
         
+    def create(self,validated_data):
+        obj = CocktailBase.objects.create(cocktail=validated_data['cocktail'],name=validated_data['name'],amount=validated_data['amount'])
+        return obj
+    
     def get_alcohol_degree(self,obj):
         return obj.name.alcohol_degree
     

@@ -16,7 +16,7 @@ class Cocktail(models.Model):
     name = models.CharField(primary_key = True,max_length=255)
     recipe = models.TextField()
     img_url = models.URLField()
-    glass = models.ForeignKey(Glass, on_delete=models.CASCADE, null=True, related_name = 'cocktail')
+    glass = models.ForeignKey(Glass, on_delete=models.SET_NULL, null=True, related_name = 'cocktail')
     
     def __str__(self):
         return self.name
