@@ -5,6 +5,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework import views, response, status
 from .models import *
 from .serializers import *
+from .exceptions import *
 
 def check_cocktail_data(model,query_set): 
     # 데이터 유효성 검사 함수 (model = 검사할 데이터 모델, query_set = 검사할 데이터(딕셔너리형))
@@ -43,14 +44,19 @@ def cocktails(request):
         hashtag_data = data.pop('hashtag')
 
         serializer = CocktailSerializer(data = data) 
-        
+        error_message = ""
         # ---유효성 검사---
-        if (serializer.is_valid()
-        and Glass.objects.filter(name = glass_data).exists()
-        and check_cocktail_data(Base,base_data)
-        and check_cocktail_data(Sub,sub_data)
-        and check_cocktail_data(Juice,juice_data)
-        and check_cocktail_data(Other,other_data)):
+        if not serializer.is_valid(): return JsonResponse(serializer.errors,status = 400)
+        elif not Glass.objects.filter(name = glass_data).exists(): error_message = f"glass name is invalid"
+        elif not check_cocktail_data(Base,base_data): error_message = "base name is invalid"
+        elif not check_cocktail_data(Sub,sub_data):  error_message = "sub name is invalid"
+        elif not check_cocktail_data(Juice,juice_data): error_message = "juice name is invalid"
+        elif not check_cocktail_data(Other,other_data): error_message = "Other name is invalid"
+        
+        if not error_message == "":
+            error_data = {"error_code":400, "error_message": error_message}
+            return JsonResponse(error_data,status = 400)
+        else:
             # --- 유효성 검사 통과 ---
             cocktail = serializer.save()
             
@@ -68,9 +74,12 @@ def cocktails(request):
             
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        
-        error_data = {"error_code":400, "error_message":f"invalid data"}
-        return JsonResponse(error_data,status = 400)
+    
+    else: # PUT, DELETE 
+        error_code = 400
+        error_message = "Unallowed http method, Please check http method again"
+        error_data = {"error_code" : error_code, "error_message" : error_message}
+        return JsonResponse( error_data ,status = 400)
     
 @csrf_exempt
 def glasses(request): # 서빙 글라스 출력, 추가 함수
@@ -226,7 +235,7 @@ def other(request,pk):
 @csrf_exempt
 def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
     if request.method == 'GET':
-        obj = Cocktail.objects.get(name = pk)
+        obj = get_object_or_404(Cocktail,name = pk)
         serializer = CocktailSerializer(obj)
         return JsonResponse(serializer.data, safe=False)
         
@@ -242,9 +251,20 @@ def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
         
         cocktail = Cocktail.objects.get(name = pk)
         serializer = CocktailSerializer(cocktail,data = data)
-        if serializer.is_valid() and Glass.objects.filter(name = glass_data).exists() and check_cocktail_data(Base,base_data) and check_cocktail_data(Sub,sub_data) and check_cocktail_data(Juice,juice_data) and check_cocktail_data(Other,other_data):
-            serializer.save()
-            # --------- 중간 테이블 업데이트 로직 짜야함 -------------
+        error_message = ""
+        # --- 유효성 검사 ---
+        if not serializer.is_valid(): return JsonResponse(serializer.errors,status = 400)
+        elif not Glass.objects.filter(name = glass_data).exists(): error_message = f"glass name is invalid"
+        elif not check_cocktail_data(Base,base_data): error_message = "base name is invalid"
+        elif not check_cocktail_data(Sub,sub_data):  error_message = "sub name is invalid"
+        elif not check_cocktail_data(Juice,juice_data): error_message = "juice name is invalid"
+        elif not check_cocktail_data(Other,other_data): error_message = "Other name is invalid"
+        
+        if not error_message == "":
+            error_data = {"error_code":400, "error_message": error_message}
+            return JsonResponse(error_data,status = 400)
+        else:
+            # --------- 유효성 검사 통과, 업데이트 로직 -------------
             # 1. 다른 부분만 검색해서 업데이트
             # 2. 전체 삭제 후 전체 생성 -> 결정.(mappng table 많아봐야 몇개 안될 듯)
             for obj in CocktailBase.objects.filter(cocktail = cocktail):
@@ -270,9 +290,6 @@ def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
             
             cocktail.save()
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        
-        error_data = {"error_code":400, "error_message":f"invalid data"}
-        return JsonResponse(error_data, status = 400)
 
     elif request.method == 'DELETE': # 칵테일 삭제
         cocktail = get_object_or_404(Cocktail,name = pk) # 예외처리 필요
@@ -285,6 +302,14 @@ def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
         for obj in CocktailOther.objects.filter(cocktail = cocktail):
             obj.delete()
         cocktail.delete()
+        data = {"response_data" : f"successfully delete {pk}"}
+        return JsonResponse(data,status = 200)
+    
+    else: # POST:
+        error_code = 400
+        error_message = "Unallowed http method, Please check http method again"
+        error_data = {"error_code" : error_code, "error_message" : error_message}
+        return JsonResponse( error_data ,status = 400)
 
 def cocktail_names(request): # 칵테일 이름만 출력하는 함수
     if request.method == 'GET':
