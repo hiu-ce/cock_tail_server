@@ -1,5 +1,4 @@
 from django.db import models
-# from api.validators import check_amount_int
 
 class Glass(models.Model): # 서빙 글라스 모델
     name = models.CharField(primary_key = True,max_length=255)
