@@ -47,7 +47,7 @@ def cocktails(request):
         error_message = ""
         # ---유효성 검사---
         if not serializer.is_valid(): return JsonResponse(serializer.errors,status = 400)
-        elif not Glass.objects.filter(name = glass_data).exists(): error_message = f"glass name is invalid"
+        elif not Glass.objects.filter(name = glass_data).exists(): error_message = "glass name is invalid"
         elif not check_cocktail_data(Base,base_data): error_message = "base name is invalid"
         elif not check_cocktail_data(Sub,sub_data):  error_message = "sub name is invalid"
         elif not check_cocktail_data(Juice,juice_data): error_message = "juice name is invalid"
@@ -63,8 +63,10 @@ def cocktails(request):
             glass = get_object_or_404(Glass, name = glass_data) #Glass 연결
             cocktail.glass = glass
             
-            for hashtag in hashtag_data: #hashtag 연결
-                cocktail.hashtag.add(hashtag)
+            for hashtag_name in hashtag_data: #hashtag 연결
+                if not HashTag.objects.filter(name=hashtag_name).exists():
+                    HashTag.objects.create(name = hashtag_name)
+                cocktail.hashtag.add(hashtag_name)
             
             # --- 중간 테이블 연결 ---
             create_mapping_table(CocktailBase,base_data,cocktail,Base) 
@@ -289,7 +291,7 @@ def cocktail(request,pk): # 특정 칵테일 수정, 삭제 함수
             create_mapping_table(CocktailOther,other_data,cocktail,Other)
             
             cocktail.save()
-            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+            return JsonResponse(serializer.data, status=200)
 
     elif request.method == 'DELETE': # 칵테일 삭제
         cocktail = get_object_or_404(Cocktail,name = pk) # 예외처리 필요

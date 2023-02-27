@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from corsheaders.defaults import default_methods
+from .secrets import SECRET_SETTINGS, DATABASES_SETTINGS
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e6ar01f5i3a)((e0bzv23dy1=j4q5jm8518cb*94e)40i889b%'
+SECRET_KEY = SECRET_SETTINGS['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -102,17 +103,7 @@ CORS_ALLOW_HEADERS = (
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cocktail',
-        'USER': 'root',
-        'PASSWORD': 'hiuce12!@',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        "OPTIONS": {"charset": "utf8mb4"}
-    }
-}
+DATABASES = DATABASES_SETTINGS
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
