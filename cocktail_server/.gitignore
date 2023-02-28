@@ -4,4 +4,4 @@ db.sqlite3
 __pycache__
 *.out
 *.cron.log.swp
-/cocktail_server.secrets
+cocktail_server/secrets.py
