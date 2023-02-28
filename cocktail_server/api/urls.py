@@ -13,7 +13,7 @@ urlpatterns = [
     path('ingredients/juices',views.juices),
     path('ingredients/juices/<str:pk>',views.juice),    
     path('ingredients/others',views.others),
-    path('ingredients/others<str:pk>',views.other),
+    path('ingredients/others/<str:pk>',views.other),
     path('glasses',views.glasses),
     path('glasses/<str:pk>',views.glass),
     path('hashtags',views.hashtags),

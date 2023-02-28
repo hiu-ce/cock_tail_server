@@ -214,6 +214,10 @@ class IngredientsURLTest(TestCase):
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json(),response_data)
         
+class IngredientsBasesURLTest(TestCase):
+    def setUp(self):
+        Base.objects.create(name="다크 럼", alcohol_degree = 40.0)
+        Base.objects.create(name="골드 럼", alcohol_degree = 40.0)
     def test_api_ingredients_bases_get(self):
         response = self.client.get('/ingredients/bases')
         response_data = [
@@ -221,15 +225,51 @@ class IngredientsURLTest(TestCase):
             {'name': '다크 럼', 'alcohol_degree': 40.0}
         ]
         self.assertEqual(response.status_code,200)
-        self.assertEqual(response.json(),response_data)  
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_ingredients_bases_post(self):
+        request_body = {
+            "name" : "잭 다니엘스",
+            "alcohol_degree" : 40.0
+        }
+        response = self.client.post('/ingredients/bases',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(Base.objects.filter(name="잭 다니엘스").exists())
+        
+    def test_api_ingredients_bases_delete(self):
+        response = self.client.delete('/ingredients/bases/골드 럼',content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(Base.objects.filter(name="골드 럼").exists())
+
+class IngredientsSubsURLTest(TestCase):
+    def setUp(self):
+        Sub.objects.create(name = "오렌지 큐라소", alcohol_degree = 20.0)
         
     def test_api_ingredients_subs_get(self):
         response = self.client.get('/ingredients/subs')
-        response_data = [
-    {'name': '오렌지 큐라소', 'alcohol_degree': 20.0}
-        ]
+        response_data = [{'name': '오렌지 큐라소', 'alcohol_degree': 20.0}]
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json(),response_data)
+        
+    def test_api_ingredients_subs_post(self):
+        request_body = {
+            "name" : "블루 큐라소",
+            "alcohol_degree" : 20.0
+        }
+        response = self.client.post('/ingredients/subs',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(Sub.objects.filter(name="블루 큐라소").exists())
+        
+    def test_api_ingredients_subs_delete(self):
+        response = self.client.delete('/ingredients/subs/오렌지 큐라소',content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(Sub.objects.filter(name="오렌지 큐라소").exists())
+        
+class IngredientsJuicesURLTest(TestCase):
+    def setUp(self):
+        Juice.objects.create(name = "라임 주스")
+        Juice.objects.create(name = "오르쟈 시럽")
+        Juice.objects.create(name = "심플 시럽")
         
     def test_api_ingredients_juices_get(self):
         response = self.client.get('/ingredients/juices')
@@ -240,7 +280,25 @@ class IngredientsURLTest(TestCase):
         ]
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json(),response_data)
+
+    def test_api_ingredients_juices_post(self):
+        request_body = {
+            "name" : "콜라"
+        }
+        response = self.client.post('/ingredients/juices',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(Juice.objects.filter(name="콜라").exists())
         
+    def test_api_ingredients_subs_delete(self):
+        response = self.client.delete('/ingredients/juices/라임 주스',content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(Juice.objects.filter(name="라임 주스").exists())
+        
+class IngredientsOthersURLTest(TestCase):
+    def setUp(self):
+        Other.objects.create(name = "라임 필")
+        Other.objects.create(name = "민트 잎")
+
     def test_api_ingredients_others_get(self):
         response = self.client.get('/ingredients/others')
         response_data = [
@@ -249,6 +307,19 @@ class IngredientsURLTest(TestCase):
         ]
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json(),response_data)
+
+    def test_api_ingredients_others_post(self):
+        request_body = {
+            "name" : "레몬"
+        }
+        response = self.client.post('/ingredients/others',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(Other.objects.filter(name="레몬").exists())
+        
+    def test_api_ingredients_others_delete(self):
+        response = self.client.delete('/ingredients/others/민트 잎',content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(Other.objects.filter(name="민트 잎").exists())
         
 class GlassURLTest(TestCase):
     def setUp(self):
@@ -259,7 +330,43 @@ class GlassURLTest(TestCase):
 	        {"name" : "올드 패션드 글라스"}
         ]
         self.assertEqual(response.status_code,200)
-        self.assertEqual(response.json(),response_data) 
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_glasses_post(self):
+        request_body = {
+            "name" : "칵테일 잔"
+        }
+        response = self.client.post('/glasses',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,201)
+        self.assertTrue(Glass.objects.filter(name="칵테일 잔").exists())
+        
+    def test_api_glasses_delete(self):
+        response = self.client.delete('/glasses/올드 패션드 글라스',content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(Glass.objects.filter(name="올드 패션드 글라스").exists())
+        
+class HashTagURLTest(TestCase):
+    def setUp(self):
+        HashTag.objects.create(name = "달달한")
+        
+    def test_api_hashtags_get(self):
+        response = self.client.get('/hashtags')
+        response_data = [{"name": "달달한"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_hashtags_post(self):
+        request_body = {
+            "name" : "과일 향이 나는"
+        }
+        response = self.client.post('/hashtags',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(HashTag.objects.filter(name="과일 향이 나는").exists())
+        
+    def test_api_hashtags_delete(self):
+        response = self.client.delete('/hashtags/달달한',content_type = 'application/json')
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(HashTag.objects.filter(name="달달한").exists())
     
 class SearchURLTest(TestCase):
     def setUp(self):
@@ -288,5 +395,7 @@ class SearchURLTest(TestCase):
         cocktail2.juice.add("콜라")
         cocktail2.other.add("라임 필")
         cocktail2.hashtag.add("달달한")
+        
+    
     
 
