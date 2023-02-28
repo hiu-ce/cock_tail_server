@@ -10,7 +10,7 @@ urlpatterns = [
     path('ingredients/bases/<str:pk>',views.base),
     path('ingredients/subs',views.subs),
     path('ingredients/subs/<str:pk>',views.sub),
-    path('ingredients/juices',views.juice),
+    path('ingredients/juices',views.juices),
     path('ingredients/juices/<str:pk>',views.juice),    
     path('ingredients/others',views.others),
     path('ingredients/others<str:pk>',views.other),

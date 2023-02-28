@@ -2,6 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIRequestFactory
 from rest_framework.parsers import JSONParser
 from .models import *
+import copy
 
 test_cocktail_data = {
 	"name" : "마이 타이",
@@ -41,50 +42,68 @@ class CocktailsURLTest(TestCase):
         HashTag.objects.create(name = "달달한")
         
     def test_api_cocktails_get(self):
+        glass = Glass.objects.get(name = "올드 패션드 글라스")
+        Cocktail.objects.create(name = "마이 타이", glass = glass)
         response = self.client.get('/cocktails')
         self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()[0]["name"],"마이 타이")
         
     def test_api_cocktails_post(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         response = self.client.post('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,201)
+        self.assertEqual(response.json()['name'],"마이 타이")
         
     def test_api_cocktails_put(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         response = self.client.put('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"Unallowed http method, Please check http method again")
         
     def test_api_cocktails_delete(self):
         response = self.client.delete('/cocktails')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"Unallowed http method, Please check http method again")
         
     def test_api_cocktails_post_no_glass_error(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         request_body['glass'] = "없는 칵테일 잔"
         response = self.client.post('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"glass name is invalid")
         
     def test_api_cocktails_post_no_base_error(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         request_body['base'] = [{"name" : "error_data", "amount" : 30.0}]
         response = self.client.post('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"base name is invalid")
         
     def test_api_cocktails_post_no_sub_error(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         request_body['sub'] = [{"name" : "error_data", "amount" : 30.0}]
         response = self.client.post('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"sub name is invalid")
         
     def test_api_cocktails_post_no_juice_error(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         request_body['juice'] = [{"name" : "error_data", "amount" : 30.0}]
         response = self.client.post('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"juice name is invalid")
 
     def test_api_cocktails_post_no_other_error(self):
-        request_body = test_cocktail_data
-        request_body['juice'] = [{"name" : "error_data", "amount" : "error_string"}]
+        request_body = copy.deepcopy(test_cocktail_data)
+        request_body['other'] = [{"name" : "error_data", "amount" : "error_string"}]
+        response = self.client.post('/cocktails',request_body,content_type = 'application/json')
+        self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"other name is invalid")
+        
+    def test_api_cocktails_post_same_name_cocktail(self):
+        glass = Glass.objects.get(name = "올드 패션드 글라스")
+        Cocktail.objects.create(name = "마이 타이", glass = glass)
+        request_body = copy.deepcopy(test_cocktail_data)
         response = self.client.post('/cocktails',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
         
@@ -130,29 +149,34 @@ class CocktailURLTest(TestCase):
     def test_api_cocktail_get(self):
         response = self.client.get('/cocktails/마이 타이')
         self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()['name'],"마이 타이")
         
     def test_api_cocktail_post(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         response = self.client.post('/cocktails/마이 타이',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,400)
+        self.assertEqual(response.json()['error_message'],"Unallowed http method, Please check http method again")
         
     def test_api_cocktail_put(self):
-        request_body = test_cocktail_data
+        request_body = copy.deepcopy(test_cocktail_data)
         response = self.client.put('/cocktails/마이 타이',request_body,content_type = 'application/json')
         self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()["name"],"마이 타이")
         
     def test_api_cocktail_delete(self):
         response = self.client.delete('/cocktails/마이 타이')
         self.assertEqual(response.status_code,200)
 
 class TodayDrinkURLTest(TestCase):
-    def setUp(self):
-        glass = Glass.objects.create(name = "올드 패션드 글라스")
-        Cocktail.objects.create(name = "마이 타이",glass = glass)
-    
+    # def test_api_today_drink_get_without_cocktail(self):
+    #     response = self.client.get('/today-drink')
+    #     self.assertEqual(response.status_code,400) 
     def test_api_today_drink_get(self):
+        glass = Glass.objects.create(name = "올드 패션드 글라스")    
+        Cocktail.objects.create(name = "마이 타이",glass = glass)
         response = self.client.get('/today-drink')
         self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()["name"],"마이 타이")        
         
 class IngredientsURLTest(TestCase):
     def setUp(self):
@@ -169,26 +193,100 @@ class IngredientsURLTest(TestCase):
     
     def test_api_ingredients_get(self):
         response = self.client.get('/ingredients')
+        response_data = {
+            "base" : [ 
+                "골드 럼",
+                "다크 럼"
+            ],
+            "sub" : [
+                "오렌지 큐라소"
+            ],
+            "juice" : [
+                "라임 주스", 
+                "심플 시럽",
+                "오르쟈 시럽"
+            ],
+            "other" : [
+                "라임 필",
+                "민트 잎"
+            ]
+        }
         self.assertEqual(response.status_code,200)
-
-# class SearchURLTest(TestCase):
-#     def setUp(self):
-#         Base.objects.create(name="다크 럼", alcohol_degree = 40.0)
-#         Base.objects.create(name="골드 럼", alcohol_degree = 40.0)
-#         Base.objects.create(name="잭 다니엘스", alcohol_degree = 40.0)
-#         Sub.objects.create(name = "오렌지 큐라소", alcohol_degree = 20.0)
-#         Juice.objects.create(name = "콜라")
-#         Juice.objects.create(name = "라임 주스")
-#         Juice.objects.create(name = "오르쟈 시럽")
-#         Juice.objects.create(name = "심플 시럽")
-#         Other.objects.create(name = "라임 필")
-#         Other.objects.create(name = "민트 잎")
-#         Glass.objects.create(name = "올드 패션드 글라스")
-#         HashTag.objects.create(name = "달달한")
+        self.assertEqual(response.json(),response_data)
         
+    def test_api_ingredients_bases_get(self):
+        response = self.client.get('/ingredients/bases')
+        response_data = [
+            {'name': '골드 럼', 'alcohol_degree': 40.0},
+            {'name': '다크 럼', 'alcohol_degree': 40.0}
+        ]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)  
+        
+    def test_api_ingredients_subs_get(self):
+        response = self.client.get('/ingredients/subs')
+        response_data = [
+    {'name': '오렌지 큐라소', 'alcohol_degree': 20.0}
+        ]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_ingredients_juices_get(self):
+        response = self.client.get('/ingredients/juices')
+        response_data = [
+            {"name" : "라임 주스"},
+            {"name" : "심플 시럽"},
+            {"name" : "오르쟈 시럽"}
+        ]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_ingredients_others_get(self):
+        response = self.client.get('/ingredients/others')
+        response_data = [
+	        {"name" : "라임 필"},
+	        {"name" : "민트 잎"}
+        ]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+class GlassURLTest(TestCase):
+    def setUp(self):
+        Glass.objects.create(name = "올드 패션드 글라스")
+    def test_api_glasses_get(self):
+        response = self.client.get('/glasses')
+        response_data = [
+	        {"name" : "올드 패션드 글라스"}
+        ]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data) 
     
-#     def test_api_ingredients_get(self):
-#         response = self.client.get('/ingredients')
-#         self.assertEqual(response.status_code,200)
+class SearchURLTest(TestCase):
+    def setUp(self):
+        base1 = Base.objects.create(name="다크 럼", alcohol_degree = 40.0)
+        base2 = Base.objects.create(name="골드 럼", alcohol_degree = 40.0)
+        base3 = Base.objects.create(name="잭 다니엘스", alcohol_degree = 40.0)
+        sub1 = Sub.objects.create(name = "오렌지 큐라소", alcohol_degree = 20.0)
+        juice1 = Juice.objects.create(name = "콜라")
+        juice2 = Juice.objects.create(name = "라임 주스")
+        juice3 = Juice.objects.create(name = "오르쟈 시럽")
+        juice4 = Juice.objects.create(name = "심플 시럽")
+        other1 = Other.objects.create(name = "라임 필")
+        other2 = Other.objects.create(name = "민트 잎")
+        glass1 = Glass.objects.create(name = "올드 패션드 글라스")
+        hashtag1 = HashTag.objects.create(name = "달달한")
+        
+        cocktail1 = Cocktail.objects.create(name = "마이 타이",glass = glass1)
+        cocktail1.base.add("다크 럼", "골드 럼")
+        cocktail1.sub.add("오렌지 큐라소")
+        cocktail1.juice.add("라임 주스")
+        cocktail1.other.add("민트 잎")
+        cocktail1.hashtag.add("달달한")
+        
+        cocktail2 = Cocktail.objects.create(name = "잭 콕",glass = glass1)
+        cocktail2.base.add("잭 다니엘스")
+        cocktail2.juice.add("콜라")
+        cocktail2.other.add("라임 필")
+        cocktail2.hashtag.add("달달한")
     
 

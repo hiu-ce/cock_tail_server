@@ -51,7 +51,7 @@ def cocktails(request):
         elif not check_cocktail_data(Base,base_data): error_message = "base name is invalid"
         elif not check_cocktail_data(Sub,sub_data):  error_message = "sub name is invalid"
         elif not check_cocktail_data(Juice,juice_data): error_message = "juice name is invalid"
-        elif not check_cocktail_data(Other,other_data): error_message = "Other name is invalid"
+        elif not check_cocktail_data(Other,other_data): error_message = "other name is invalid"
         
         if not error_message == "":
             error_data = {"error_code":400, "error_message": error_message}
@@ -424,9 +424,8 @@ def todaydrink(request): #오늘의 추천 칵테일 조회 함수
         new_obj = TodayDrink.objects.create(cocktail = today_drink)
         new_obj.save()
     
-    serializer = CocktailSerializer(today_drink)
-    ResponseData = {"error_code":200,"error_message":"", "data" : serializer.data}
-    return JsonResponse(ResponseData, status=200)
+        serializer = CocktailSerializer(today_drink)
+        return JsonResponse(serializer.data, status=200)
 
 @csrf_exempt
 def hashtags(request):
