@@ -396,6 +396,62 @@ class SearchURLTest(TestCase):
         cocktail2.other.add("라임 필")
         cocktail2.hashtag.add("달달한")
         
+    def test_api_search_get(self):
+        response = self.client.get('/search')
+        response_data = [{"name": "마이 타이"},{"name": "잭 콕"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_search_get_filter_base(self):
+        response = self.client.get('/search?base=다크 럼')
+        response_data = [{"name": "마이 타이"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
     
+    def test_api_search_get_filter_sub(self):
+        response = self.client.get('/search?sub=오렌지 큐라소')
+        response_data = [{"name": "마이 타이"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
     
+    def test_api_search_get_filter_juice(self):
+        response = self.client.get('/search?juice=콜라')
+        response_data = [{"name": "잭 콕"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_search_get_filter_other(self):
+        response = self.client.get('/search?other=민트 잎')
+        response_data = [{"name": "마이 타이"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_search_get_filter_hashtag(self):
+        response = self.client.get('/search?hashtag=달달한')
+        response_data = [{"name": "마이 타이"},{"name": "잭 콕"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+        
+    def test_api_search_get_filter_base_and_sub(self):
+        response = self.client.get('/search?base=다크 럼&sub=오렌지 큐라소')
+        response_data = [{"name": "마이 타이"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json(),response_data)
+    
+    def test_api_search_get_no_cocktail(self):
+        response = self.client.get('/search?base=error_data')
+        response_data = []
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()["data"],response_data)
+        
+    def test_api_search_get_no_cocktail_get_OR_query(self):
+        response = self.client.get('/search?base=다크 럼&juice=콜라')
+        response_data = [{"name": "마이 타이"},{"name": "잭 콕"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()["data"],response_data)
 
+    def test_api_search_get_error_data_and_get_OR_query(self):
+        response = self.client.get('/search?base=다크&juice=콜라')
+        response_data = [{"name": "잭 콕"}]
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()["data"],response_data)
